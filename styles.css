@@ -476,15 +476,31 @@ p {
 
 .buy-links {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .buy-links a {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   color: var(--sage);
   font-weight: 900;
-  text-decoration: underline;
-  text-underline-offset: 5px;
+}
+
+.buy-links .buy-now-link {
+  color: #fffdf8;
+  border-color: transparent;
+  background: var(--rose);
+}
+
+.buy-links a:hover,
+.buy-links a:focus-visible {
+  border-color: var(--sage);
 }
 
 .live-section {
@@ -540,6 +556,94 @@ p {
 .page-hero p:not(.eyebrow) {
   max-width: 760px;
   font-size: 1.15rem;
+}
+
+.checkout-section {
+  padding-top: 36px;
+}
+
+.checkout-card {
+  display: grid;
+  gap: 26px;
+  padding: clamp(24px, 5vw, 42px);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(231, 237, 225, 0.72), transparent 58%),
+    var(--cream);
+  box-shadow: var(--shadow);
+}
+
+.checkout-card h2 {
+  max-width: 760px;
+}
+
+.checkout-detail {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.checkout-product {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.38fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+}
+
+.checkout-product img {
+  width: 100%;
+  aspect-ratio: 1 / 0.78;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.checkout-price {
+  display: inline-flex;
+  margin-top: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: #fffdf8;
+  background: var(--clay);
+  font-size: 1.1rem;
+}
+
+.payment-panel {
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.72);
+}
+
+.payment-panel h3 {
+  max-width: 760px;
+  margin-bottom: 0;
+  font-size: clamp(1.55rem, 3vw, 2.35rem);
+}
+
+.payment-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.checkout-note,
+.checkout-disclaimer {
+  margin-bottom: 0;
+  color: var(--body);
+  font-weight: 800;
+}
+
+.checkout-steps {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding-left: 22px;
+  color: var(--body);
+}
+
+.checkout-steps strong {
+  color: var(--ink);
 }
 
 .custom-layout {
@@ -879,6 +983,7 @@ p {
   .product-row,
   .product-list,
   .product-list .product-card:first-child,
+  .checkout-product,
   .shop-path-grid,
   .values-grid,
   .buy-guide-grid,
@@ -960,6 +1065,7 @@ p {
   .product-row,
   .product-list,
   .product-list .product-card:first-child,
+  .checkout-product,
   .shop-path-grid,
   .values-grid,
   .buy-guide-grid,
