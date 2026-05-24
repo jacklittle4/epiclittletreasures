@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Order handmade journals, dyed paper bundles, textile packs, folios, seasonal keepsakes, and custom pieces from Epic Little Treasures."
+    />
+    <title>Order & Contact | Epic Little Treasures</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=4" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner page-shell">
+        <a class="brand" href="index.html" aria-label="Epic Little Treasures home">
+          <span class="brand-name">Epic Little Treasures</span>
+          <span class="brand-note">handmade journals and keepsakes</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="index.html">Home</a>
+          <a href="treasures.html">Shop</a>
+          <a href="about.html">About</a>
+          <a href="faq.html">FAQ</a>
+          <a class="nav-button" href="contact.html" aria-current="page">Order Inquiry</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero page-shell" aria-labelledby="contact-title">
+        <p class="eyebrow">Order and contact</p>
+        <h1 id="contact-title">Send a quick note and ask about a treasure.</h1>
+        <p>
+          This form sends an inquiry to the shop email. You can also message on Facebook,
+          follow the TikTok lives, message on Facebook, call, or email directly if that is easier.
+        </p>
+      </section>
+
+      <section class="section contact-section" aria-labelledby="form-title">
+        <div class="contact-layout page-shell">
+          <aside class="contact-panel" aria-label="Direct contact details">
+            <p class="eyebrow">Direct contact</p>
+            <h2>Prefer to talk first?</h2>
+            <p>
+              Share the piece name, color ideas, budget comfort level, and whether you
+              need pickup or shipping. Short messages are perfectly fine.
+            </p>
+            <div class="contact-links">
+              <a href="mailto:xoxodragonfly@gmail.com">
+                <span>Email</span>
+                xoxodragonfly@gmail.com
+              </a>
+              <a href="tel:+17173194692">
+                <span>Phone</span>
+                (717) 319-4692
+              </a>
+              <a href="https://www.facebook.com/slittletreasures">
+                <span>Facebook</span>
+                Epic Little Treasures
+              </a>
+              <a href="https://www.tiktok.com/@stephanie.davis015">
+                <span>TikTok</span>
+                @stephanie.davis015
+              </a>
+            </div>
+            <div class="mini-note">
+              <strong>Buying tip</strong>
+              Screenshot or mention the product name from the shop page so the request is easy to match.
+            </div>
+          </aside>
+
+          <form
+            class="contact-form"
+            action="https://formsubmit.co/xoxodragonfly@gmail.com"
+            method="POST"
+          >
+            <input type="hidden" name="_subject" value="New Epic Little Treasures order inquiry" />
+            <input type="hidden" name="_template" value="table" />
+            <input type="hidden" name="_captcha" value="false" />
+            <h2 id="form-title" class="form-title">Simple order question</h2>
+            <div>
+              <label for="name">Name</label>
+              <input id="name" name="name" type="text" autocomplete="name" required />
+            </div>
+            <div>
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" autocomplete="email" required />
+            </div>
+            <div>
+              <label for="phone">Phone</label>
+              <input id="phone" name="phone" type="tel" autocomplete="tel" />
+            </div>
+            <div>
+              <label for="item">Which piece are you asking about?</label>
+              <select id="item" name="item" required>
+                <option value="">Choose an item</option>
+                <option value="Hand stitched journal - $38">Hand stitched journal - $38</option>
+                <option value="Mini lace journal - $26">Mini lace journal - $26</option>
+                <option value="Hand dyed paper bundle - $12">Hand dyed paper bundle - $12</option>
+                <option value="Textile snippet pack - $10">Textile snippet pack - $10</option>
+                <option value="Pocket keepsake folio - $18">Pocket keepsake folio - $18</option>
+                <option value="Seasonal treasure bundle - $24">Seasonal treasure bundle - $24</option>
+                <option value="Custom journal - from $45">Custom journal - from $45</option>
+                <option value="Custom dyed paper set - from $15">Custom dyed paper set - from $15</option>
+                <option value="Custom gift bundle - from $30">Custom gift bundle - from $30</option>
+                <option value="Not sure yet">Not sure yet</option>
+              </select>
+            </div>
+            <div>
+              <label for="budget">Budget comfort</label>
+              <select id="budget" name="budget">
+                <option value="">Choose one</option>
+                <option>Under $15</option>
+                <option>$15-$30</option>
+                <option>$30-$50</option>
+                <option>$50+</option>
+                <option>Flexible</option>
+              </select>
+            </div>
+            <div>
+              <label for="timeline">When do you need it?</label>
+              <select id="timeline" name="timeline">
+                <option value="">No set date</option>
+                <option>This week</option>
+                <option>Within two weeks</option>
+                <option>Within a month</option>
+                <option>For a future gift or event</option>
+              </select>
+            </div>
+            <div class="full-field">
+              <label for="message">Message</label>
+              <textarea
+                id="message"
+                name="message"
+                rows="7"
+                placeholder="Tell me what you want to buy, colors you like, quantity, pickup or shipping needs, and any gift details."
+                required
+              ></textarea>
+            </div>
+            <button class="button button-primary full-field" type="submit">Send my question</button>
+            <p class="form-status full-field" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-grid page-shell">
+        <div>
+          <a class="footer-brand" href="index.html">Epic Little Treasures</a>
+          <p>Vintage cottage handmade journals, dyed papers, textile packs, and keepsakes.</p>
+        </div>
+        <nav aria-label="Footer navigation">
+          <a href="treasures.html">Shop</a>
+          <a href="about.html">About</a>
+          <a href="faq.html">FAQ</a>
+          <a href="contact.html">Order Inquiry</a>
+        </nav>
+        <div class="footer-contact">
+          <a href="https://www.tiktok.com/@stephanie.davis015">TikTok @stephanie.davis015</a>
+          <a href="https://www.facebook.com/slittletreasures">Facebook shop page</a>
+          <a href="mailto:xoxodragonfly@gmail.com">xoxodragonfly@gmail.com</a>
+          <a href="tel:+17173194692">(717) 319-4692</a>
+        </div>
+      </div>
+      <p class="copyright page-shell">&copy; 2026 Epic Little Treasures.</p>
+    </footer>
+
+    <script src="script.js?v=4"></script>
+  </body>
+</html>
