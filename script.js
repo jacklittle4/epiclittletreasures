@@ -31,17 +31,36 @@ const productInquiryUrl = (product) => `contact.html?item=${encodeURIComponent(p
 const productCheckoutUrl = (product) => `checkout.html?item=${encodeURIComponent(product.id)}`;
 const isFixedPrice = (price = "") => price.trim().startsWith("$");
 const productLabel = (product) => `${product.name} - ${product.price}`;
+const statusLabels = {
+  available: "Available",
+  "sold-out": "Sold out",
+  "custom-order": "Custom order",
+};
+
+const normalizeStatus = (product) => {
+  if (product.status) {
+    return product.status;
+  }
+  return product.available ? "available" : "sold-out";
+};
 
 const productCard = (product, mode = "grid") => {
+  const status = normalizeStatus(product);
   const fixedPrice = isFixedPrice(product.price || "");
-  const canBuyNow = product.available && fixedPrice;
-  const availability = canBuyNow ? "Ready for buy now" : "Ask before purchase";
-  const detail = mode === "list" ? `<p class="product-detail">${product.details || ""}</p>` : "";
+  const canBuyNow = status === "available" && fixedPrice;
+  const availability = canBuyNow ? "Ready for buy now" : statusLabels[status] || "Ask first";
+  const gallery = Array.isArray(product.gallery) ? product.gallery : [];
+  const image = gallery[0] || product.image;
+  const galleryPreview = gallery.length > 1
+    ? `<div class="product-gallery" aria-label="More photos">${gallery.slice(1, 4).map((photo) => `<img src="${photo}" alt="${product.alt || product.name}" loading="lazy" />`).join("")}</div>`
+    : "";
+  const detail = mode === "list" ? `<p class="product-detail">${product.details || ""}</p>${galleryPreview}` : "";
 
   return `
     <article class="product-card" id="${product.id}">
       <a class="product-photo" href="${canBuyNow ? productCheckoutUrl(product) : productInquiryUrl(product)}">
-        <img src="${product.image}" alt="${product.alt || product.name}" loading="lazy" />
+        <img src="${image}" alt="${product.alt || product.name}" loading="lazy" />
+        <span class="status-badge status-${status}">${statusLabels[status] || "Ask first"}</span>
       </a>
       <div class="product-body">
         <div class="product-topline">
@@ -56,7 +75,7 @@ const productCard = (product, mode = "grid") => {
           ${
             canBuyNow
               ? `<a class="buy-now-link" href="${productCheckoutUrl(product)}">Buy now</a>`
-              : `<a class="buy-now-link" href="${productInquiryUrl(product)}">Start request</a>`
+              : `<a class="buy-now-link" href="${productInquiryUrl(product)}">${status === "sold-out" ? "Ask next batch" : "Start request"}</a>`
           }
           <a href="${productInquiryUrl(product)}">Ask a question</a>
           <a href="${fallbackCatalog.shop.tiktok}">Watch on TikTok</a>
@@ -73,7 +92,9 @@ const renderProducts = (catalog) => {
   productTargets.forEach((target) => {
     const mode = target.dataset.products;
     const limit = Number(target.dataset.limit || 0);
-    const list = mode === "featured" ? products.filter((product) => product.featured) : products;
+    const list = mode === "featured" || mode === "latest"
+      ? products.filter((product) => product.featured && normalizeStatus(product) === "available")
+      : products;
     const rendered = (limit ? list.slice(0, limit) : list).map((product) => {
       return productCard(product, mode === "all" ? "list" : "grid");
     });
@@ -114,12 +135,13 @@ const renderCheckout = (catalog) => {
   }
 
   const fixedPrice = isFixedPrice(product.price || "");
+  const status = normalizeStatus(product);
   const note = `Payment note: ${productLabel(product)}`;
 
   checkoutTarget.innerHTML = `
     <article class="checkout-card checkout-detail">
       <div class="checkout-product">
-        <img src="${product.image}" alt="${product.alt || product.name}" />
+        <img src="${(Array.isArray(product.gallery) && product.gallery[0]) || product.image}" alt="${product.alt || product.name}" />
         <div>
           <p class="eyebrow">${product.category || "Handmade"}</p>
           <h2>${product.name}</h2>
@@ -128,7 +150,7 @@ const renderCheckout = (catalog) => {
         </div>
       </div>
       ${
-        fixedPrice
+        fixedPrice && status === "available"
           ? `
             <div class="payment-panel">
               <p class="eyebrow">Pay now</p>
@@ -142,9 +164,9 @@ const renderCheckout = (catalog) => {
           `
           : `
             <div class="payment-panel">
-              <p class="eyebrow">Custom price</p>
+              <p class="eyebrow">${status === "sold-out" ? "Sold out" : "Custom price"}</p>
               <h3>This item needs a quick message before payment.</h3>
-              <p>Custom pieces depend on color, size, materials, and timing, so the final total should be confirmed first.</p>
+              <p>${status === "sold-out" ? "This piece may already be claimed, but a similar future batch or custom option may be possible." : "Custom pieces depend on color, size, materials, and timing, so the final total should be confirmed first."}</p>
               <div class="payment-actions">
                 <a class="button button-primary" href="${productInquiryUrl(product)}">Start the request</a>
               </div>
@@ -160,6 +182,39 @@ const renderCheckout = (catalog) => {
         Handmade and live-sale pieces can move quickly. If a one-of-a-kind item was already claimed,
         Stephanie can follow up with a refund, swap, or custom option.
       </p>
+      <form class="contact-form checkout-followup" action="https://formsubmit.co/${shop.email}" method="POST">
+        <input type="hidden" name="_subject" value="Epic Little Treasures checkout follow-up" />
+        <input type="hidden" name="_template" value="table" />
+        <input type="hidden" name="_captcha" value="false" />
+        <input type="hidden" name="_next" value="https://jacklittle4.github.io/epiclittletreasures/thank-you.html" />
+        <input type="hidden" name="item" value="${productLabel(product)}" />
+        <h3 class="form-title">Send shipping or pickup details</h3>
+        <div>
+          <label for="checkout-name">Name</label>
+          <input id="checkout-name" name="name" type="text" autocomplete="name" required />
+        </div>
+        <div>
+          <label for="checkout-email">Email</label>
+          <input id="checkout-email" name="email" type="email" autocomplete="email" required />
+        </div>
+        <div>
+          <label for="checkout-phone">Phone</label>
+          <input id="checkout-phone" name="phone" type="tel" autocomplete="tel" />
+        </div>
+        <div>
+          <label for="checkout-method">Preferred handoff</label>
+          <select id="checkout-method" name="handoff">
+            <option>Shipping</option>
+            <option>Local pickup</option>
+            <option>Ask me first</option>
+          </select>
+        </div>
+        <div class="full-field">
+          <label for="checkout-message">Address, payment note, or question</label>
+          <textarea id="checkout-message" name="message" rows="5" required placeholder="Include your shipping address, payment note name, or any pickup details."></textarea>
+        </div>
+        <button class="button button-primary full-field" type="submit">Send follow-up details</button>
+      </form>
     </article>
   `;
 };

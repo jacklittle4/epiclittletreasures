@@ -20,7 +20,8 @@
       "summary": "A TikTok live junk journal bundle with 10 pulls. Price includes shipping.",
       "details": "Bundles may include vintage paper, paper clips, coffee paper, wax seals, pens, and other small surprises.",
       "featured": true,
-      "available": true
+      "available": true,
+      "status": "available"
     },
     {
       "id": "junk-journal-bundle-15",
@@ -32,7 +33,8 @@
       "summary": "A larger TikTok live junk journal bundle with 15 pulls. Price includes shipping.",
       "details": "A good middle option for buyers who want more paper, clips, seals, pens, and surprise pieces.",
       "featured": false,
-      "available": true
+      "available": true,
+      "status": "available"
     },
     {
       "id": "junk-journal-bundle-20",
@@ -44,7 +46,8 @@
       "summary": "A fuller TikTok live junk journal bundle with 20 pulls. Price includes shipping.",
       "details": "Great for junk journal makers who want a wider mix of paper, embellishments, and useful bits.",
       "featured": true,
-      "available": true
+      "available": true,
+      "status": "available"
     },
     {
       "id": "junk-journal-bundle-25",
@@ -56,7 +59,8 @@
       "summary": "The biggest listed TikTok live junk journal bundle with 25 pulls. Price includes shipping.",
       "details": "A generous bundle for serious paper crafters, junk journal makers, and live-sale regulars.",
       "featured": false,
-      "available": true
+      "available": true,
+      "status": "available"
     },
     {
       "id": "graffiti-art-print",
@@ -68,7 +72,8 @@
       "summary": "A printed Graffiti Art design with free shipping.",
       "details": "Shown from a Canva listing. Printed option is listed at $24.70 shipped.",
       "featured": true,
-      "available": true
+      "available": true,
+      "status": "available"
     },
     {
       "id": "graffiti-art-digital",
@@ -80,7 +85,8 @@
       "summary": "A digital Graffiti Art design file for buyers who prefer a download.",
       "details": "Digital option is listed at $8.23.",
       "featured": false,
-      "available": true
+      "available": true,
+      "status": "available"
     },
     {
       "id": "mini-lace-journal",
@@ -92,7 +98,8 @@
       "summary": "A smaller stitched journal with soft paper, fabric layers, ribbon, and lace accents.",
       "details": "A lovely option for small gifts, keepsake shelves, craft swaps, and desk treasures.",
       "featured": false,
-      "available": true
+      "available": true,
+      "status": "sold-out"
     },
     {
       "id": "hand-stitched-journal",
@@ -104,7 +111,8 @@
       "summary": "A fabric-covered journal with dyed pages, visible binding, lace ties, and layered handmade details.",
       "details": "Best for journaling, gifting, collecting, memory keeping, and junk journal projects.",
       "featured": false,
-      "available": true
+      "available": true,
+      "status": "available"
     },
     {
       "id": "hand-dyed-paper-bundle",
@@ -116,7 +124,8 @@
       "summary": "Soft colored paper sets for journaling, crafts, collage, memory keeping, and gifts.",
       "details": "Batch colors may vary with each dye session, which is part of the charm.",
       "featured": true,
-      "available": true
+      "available": true,
+      "status": "available"
     },
     {
       "id": "textile-snippet-pack",
@@ -128,7 +137,8 @@
       "summary": "Lace, ribbon, fabric scraps, buttons, dyed muslin, and small stitched details.",
       "details": "Useful for junk journals, tags, altered books, slow stitching, and craft projects.",
       "featured": false,
-      "available": true
+      "available": true,
+      "status": "available"
     },
     {
       "id": "pocket-keepsake-folio",
@@ -140,7 +150,8 @@
       "summary": "A small folded treasure with pockets, dyed inserts, stitched edges, and ribbon.",
       "details": "Good for little notes, paper keepsakes, small ephemera, and thoughtful gifts.",
       "featured": true,
-      "available": true
+      "available": true,
+      "status": "available"
     },
     {
       "id": "seasonal-treasure-bundle",
@@ -152,7 +163,8 @@
       "summary": "A themed bundle of tags, small paper pieces, textile details, and accents.",
       "details": "Limited by season, current materials, and what is being made for TikTok lives.",
       "featured": false,
-      "available": true
+      "available": true,
+      "status": "available"
     },
     {
       "id": "custom-journal",
@@ -164,7 +176,8 @@
       "summary": "A custom handmade journal built around preferred colors, theme, occasion, or style.",
       "details": "Send color ideas, size, budget comfort, deadline, and whether it is for a gift.",
       "featured": false,
-      "available": true
+      "available": true,
+      "status": "custom-order"
     }
   ]
 }

@@ -25,3 +25,13 @@ http://127.0.0.1:4173/
 - Product data lives in `products.json`.
 - The owner updater is intentionally not linked or published with the customer site. Keep it local or in a private repo, then export an updated `products.json`.
 - TikTok links point to `https://www.tiktok.com/@stephanie.davis015`.
+
+## Launch checklist
+
+- Update `products.json` for names, prices, `status` (`available`, `sold-out`, or `custom-order`), photos, alt text, and featured items.
+- Replace generated images in `assets/` with real product photos when available.
+- Confirm Cash App and Venmo links in `products.json`.
+- Submit one test contact form and one checkout follow-up form so FormSubmit is activated.
+- Review `privacy.html`, `terms.html`, `sitemap.xml`, and `robots.txt` before launch.
+- If a real custom domain is purchased later, update canonical links, sitemap URLs, FormSubmit `_next` URLs, and GitHub Pages settings.
+- Analytics are not installed yet. Add a real Google Analytics, Plausible, or Cloudflare Web Analytics ID only after the owner chooses one.
