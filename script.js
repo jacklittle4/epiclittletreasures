@@ -28,8 +28,11 @@ const getCatalog = async () => {
   }
 };
 
-const productInquiryUrl = (product) => `contact.html?item=${encodeURIComponent(product.id)}`;
-const productCheckoutUrl = (product) => `checkout.html?item=${encodeURIComponent(product.id)}`;
+const slugify = (value = "") =>
+  String(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+const productKey = (product) => product.id || slugify(product.name || "");
+const productInquiryUrl = (product) => `contact.html?item=${encodeURIComponent(productKey(product))}`;
+const productCheckoutUrl = (product) => `checkout.html?item=${encodeURIComponent(productKey(product))}`;
 const isFixedPrice = (price = "") => price.trim().startsWith("$");
 const productLabel = (product) => `${product.name} - ${product.price}`;
 const statusLabels = {
@@ -116,7 +119,7 @@ const renderCheckout = (catalog) => {
   const shop = { ...fallbackCatalog.shop, ...(catalog.shop || {}) };
   const params = new URLSearchParams(window.location.search);
   const itemId = params.get("item");
-  const product = products.find((entry) => entry.id === itemId);
+  const product = products.find((entry) => productKey(entry) === itemId);
 
   if (!product) {
     checkoutTarget.innerHTML = `
@@ -232,7 +235,7 @@ const populateContactItems = (catalog) => {
     `<option value="">Choose an item</option>`,
     ...products.map((product) => {
       const label = productLabel(product);
-      return `<option value="${label}" data-product-id="${product.id}">${label}</option>`;
+      return `<option value="${label}" data-product-id="${productKey(product)}">${label}</option>`;
     }),
     `<option value="Workshop or class">Workshop or class</option>`,
     `<option value="Not sure yet">Not sure yet</option>`,
@@ -242,7 +245,7 @@ const populateContactItems = (catalog) => {
 
   const params = new URLSearchParams(window.location.search);
   const itemId = params.get("item");
-  const selectedProduct = products.find((product) => product.id === itemId);
+  const selectedProduct = products.find((product) => productKey(product) === itemId);
 
   if (selectedProduct) {
     const selectedValue = productLabel(selectedProduct);
