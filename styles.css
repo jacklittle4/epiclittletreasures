@@ -1294,6 +1294,7 @@ body {
   background:
     radial-gradient(1100px 460px at 50% -8%, rgba(156, 174, 135, 0.18), transparent 62%),
     linear-gradient(180deg, var(--ivory), var(--cream) 42%, var(--ivory));
+  background-color: var(--ivory);
 }
 
 /* Clean sans for interface bits; serif stays for reading + display */
@@ -1818,4 +1819,319 @@ h2 {
     transform: none;
     transition: none;
   }
+}
+
+/* ============================================================
+   Photo-forward junk-journal rehaul (v8)
+   Taped polaroids, kraft tags, stitch lines, collage hero.
+   ============================================================ */
+
+/* Washi-tape strip (decorative) */
+.tape {
+  position: absolute;
+  width: 92px;
+  height: 28px;
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.25) 0 6px, rgba(255, 255, 255, 0) 6px 12px),
+    linear-gradient(120deg, rgba(181, 168, 203, 0.72), rgba(156, 174, 135, 0.66));
+  box-shadow: 0 3px 7px rgba(78, 55, 44, 0.14);
+  opacity: 0.9;
+  z-index: 3;
+}
+.tape::before,
+.tape::after {
+  content: "";
+  position: absolute;
+  inset: 0 -1px;
+  background: inherit;
+}
+.tape-peach {
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.28) 0 6px, rgba(255, 255, 255, 0) 6px 12px),
+    linear-gradient(120deg, rgba(232, 184, 148, 0.8), rgba(201, 162, 39, 0.6));
+}
+
+/* Taped polaroid photo */
+.polaroid {
+  margin: 0;
+  padding: 12px 12px 40px;
+  background: #fffdf8;
+  border-radius: 3px;
+  box-shadow: 0 16px 32px rgba(78, 55, 44, 0.22);
+  position: relative;
+}
+.polaroid img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1.1;
+  object-fit: cover;
+  border-radius: 2px;
+  background: var(--linen);
+}
+.polaroid figcaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  text-align: center;
+  color: var(--plum);
+  font-family: var(--font-script);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+/* Kraft price tag */
+.price-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px 8px 24px;
+  background: #d8c3a0;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: 1.02rem;
+  letter-spacing: 0.01em;
+  clip-path: polygon(16% 0, 100% 0, 100% 100%, 16% 100%, 0 50%);
+  box-shadow: 0 4px 9px rgba(78, 55, 44, 0.22);
+}
+.price-tag::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: var(--cream);
+  box-shadow: inset 0 0 0 1.6px rgba(63, 54, 44, 0.4);
+}
+
+/* Stitched (dashed) divider */
+.stitch-divider {
+  width: min(220px, 60%);
+  margin: 0 auto;
+  border: 0;
+  border-top: 2px dashed var(--sage);
+  opacity: 0.55;
+}
+
+/* ---- Collage hero ---- */
+.hero-collage {
+  padding-block: clamp(40px, 6vw, 80px) clamp(48px, 7vw, 96px);
+  background:
+    radial-gradient(900px 380px at 18% 0%, rgba(181, 168, 203, 0.18), transparent 60%),
+    linear-gradient(160deg, var(--sage-soft), var(--cream) 55%, var(--peach-soft));
+  overflow: hidden;
+}
+.hero-collage-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: clamp(30px, 5vw, 64px);
+  align-items: center;
+}
+.hero-copy .hero-mark {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 14px;
+}
+.hero-copy h1 {
+  margin-bottom: 18px;
+}
+.hero-lead {
+  max-width: 30ch;
+  font-size: 1.2rem;
+}
+.hero-stack {
+  position: relative;
+  min-height: 440px;
+}
+.hero-stack .polaroid {
+  position: absolute;
+  width: 47%;
+}
+.hero-stack .p1 {
+  top: 0;
+  left: 4%;
+  transform: rotate(-6deg);
+  z-index: 1;
+}
+.hero-stack .p2 {
+  top: 8%;
+  right: 2%;
+  transform: rotate(5deg);
+  z-index: 2;
+}
+.hero-stack .p3 {
+  bottom: -2%;
+  left: 26%;
+  transform: rotate(-2deg);
+  z-index: 3;
+}
+.hero-stack .tape-a {
+  top: -6px;
+  left: 30%;
+  transform: rotate(-8deg);
+  z-index: 4;
+}
+
+/* ---- Lookbook gallery ---- */
+.lookbook {
+  background: var(--ivory);
+}
+.lookbook-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(20px, 4vw, 48px);
+  padding-top: 12px;
+}
+.lookbook-grid .polaroid {
+  justify-self: center;
+  width: min(320px, 100%);
+}
+.lookbook-grid .polaroid:nth-child(odd) {
+  transform: rotate(-3deg);
+}
+.lookbook-grid .polaroid:nth-child(even) {
+  transform: rotate(2.5deg);
+  margin-top: 20px;
+}
+.lookbook-grid .polaroid::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  width: 86px;
+  height: 26px;
+  transform: translateX(-50%) rotate(-4deg);
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.28) 0 6px, rgba(255, 255, 255, 0) 6px 12px),
+    linear-gradient(120deg, rgba(232, 184, 148, 0.8), rgba(156, 174, 135, 0.6));
+  box-shadow: 0 3px 7px rgba(78, 55, 44, 0.14);
+}
+
+/* ---- Image-forward product cards + kraft tag ---- */
+.product-photo {
+  aspect-ratio: 1 / 0.95;
+}
+.product-card .price-tag {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  transform: rotate(-4deg);
+  z-index: 2;
+}
+.product-topline {
+  margin-bottom: 8px;
+}
+
+/* ---- Reviews as taped paper notes ---- */
+.review-grid article {
+  position: relative;
+  background: var(--cream);
+  transform: rotate(-1.4deg);
+}
+.review-grid article:nth-child(even) {
+  transform: rotate(1.6deg);
+}
+.review-grid article::before {
+  content: "";
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  width: 78px;
+  height: 24px;
+  transform: translateX(-50%) rotate(-5deg);
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.28) 0 6px, rgba(255, 255, 255, 0) 6px 12px),
+    linear-gradient(120deg, rgba(181, 168, 203, 0.7), rgba(156, 174, 135, 0.55));
+  box-shadow: 0 3px 7px rgba(78, 55, 44, 0.14);
+}
+.review-grid p {
+  font-size: 1.32rem;
+}
+
+@media (max-width: 860px) {
+  .hero-collage-inner {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .hero-stack {
+    min-height: 360px;
+    max-width: 460px;
+    margin-inline: auto;
+    width: 100%;
+  }
+  .lookbook-grid {
+    grid-template-columns: 1fr;
+    max-width: 360px;
+    margin-inline: auto;
+    gap: 30px;
+  }
+  .lookbook-grid .polaroid:nth-child(even) {
+    margin-top: 0;
+  }
+}
+
+/* ============================================================
+   Calmer, smaller headings (v8) — toned down across every page
+   ============================================================ */
+h1 {
+  font-size: clamp(1.85rem, 2.9vw, 2.5rem);
+  line-height: 1.1;
+}
+h2 {
+  font-size: clamp(1.4rem, 2vw, 1.8rem);
+  line-height: 1.15;
+}
+h3 {
+  font-size: clamp(1.1rem, 1.5vw, 1.28rem);
+}
+.home-hero h1,
+.hero-collage h1 {
+  font-size: clamp(1.95rem, 3.2vw, 2.7rem);
+}
+.page-hero h1 {
+  font-size: clamp(1.7rem, 2.5vw, 2.2rem);
+}
+.section-heading h2 {
+  font-size: clamp(1.4rem, 2vw, 1.8rem);
+}
+.intro-panel h2 {
+  font-size: 1.35rem;
+}
+.faq-list h2 {
+  font-size: 1.4rem;
+}
+.manager-card h2 {
+  font-size: 1.5rem;
+}
+.live-card h3 {
+  font-size: 1.5rem;
+}
+.shop-path-grid span {
+  font-size: 1.45rem;
+}
+.review-feature p {
+  font-size: clamp(1.2rem, 1.8vw, 1.5rem);
+}
+.workshop-date .wd-day {
+  font-size: 2rem;
+}
+.bundle-tiers article span {
+  font-size: 1.3rem;
+}
+
+/* Framed business card (About page) */
+.brand-card {
+  margin: 8px 0 4px;
+  padding: 10px;
+  max-width: 440px;
+  background: #fffdf8;
+  border-radius: 4px;
+  box-shadow: var(--shadow);
+  transform: rotate(-1.4deg);
+}
+.brand-card img {
+  display: block;
+  width: 100%;
+  border-radius: 2px;
 }

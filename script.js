@@ -56,17 +56,18 @@ const productCard = (product, mode = "grid") => {
     ? `<div class="product-gallery" aria-label="More photos">${gallery.slice(1, 4).map((photo) => `<img src="${photo}" alt="${product.alt || product.name}" loading="lazy" />`).join("")}</div>`
     : "";
   const detail = mode === "list" ? `<p class="product-detail">${product.details || ""}</p>${galleryPreview}` : "";
+  const priceTag = product.price ? `<span class="price-tag">${product.price}</span>` : "";
 
   return `
     <article class="product-card" id="${product.id}">
       <a class="product-photo" href="${canBuyNow ? productCheckoutUrl(product) : productInquiryUrl(product)}">
         <img src="${image}" alt="${product.alt || product.name}" loading="lazy" />
         <span class="status-badge status-${status}">${statusLabels[status] || "Ask first"}</span>
+        ${priceTag}
       </a>
       <div class="product-body">
         <div class="product-topline">
           <span>${product.category || "Handmade"}</span>
-          <strong>${product.price || "Message"}</strong>
         </div>
         <h3>${product.name}</h3>
         <p>${product.summary || ""}</p>
