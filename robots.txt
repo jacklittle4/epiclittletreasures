@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /manager.html
 
 Sitemap: https://jacklittle4.github.io/epiclittletreasures/sitemap.xml

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Epic Little Treasures moth">
+  <g fill="none" stroke="#3f362c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- right wings -->
+    <g>
+      <path d="M60 50 C 74 30, 96 26, 106 34 C 112 40, 104 56, 90 64 C 78 70, 64 64, 60 58 Z" fill="#e6ece0"/>
+      <path d="M60 62 C 74 66, 92 74, 94 88 C 95 98, 82 101, 72 94 C 64 89, 60 78, 60 70 Z" fill="#ddd0e6"/>
+      <path d="M64 56 C 76 50, 88 46, 98 40" stroke-width="1.4"/>
+      <circle cx="92" cy="46" r="3.1" fill="#c9a227" stroke="none"/>
+      <path d="M66 73 C 76 77, 84 82, 88 89" stroke-width="1.4"/>
+    </g>
+    <!-- left wings (mirrored) -->
+    <g transform="translate(120,0) scale(-1,1)">
+      <path d="M60 50 C 74 30, 96 26, 106 34 C 112 40, 104 56, 90 64 C 78 70, 64 64, 60 58 Z" fill="#e6ece0"/>
+      <path d="M60 62 C 74 66, 92 74, 94 88 C 95 98, 82 101, 72 94 C 64 89, 60 78, 60 70 Z" fill="#ddd0e6"/>
+      <path d="M64 56 C 76 50, 88 46, 98 40" stroke-width="1.4"/>
+      <circle cx="92" cy="46" r="3.1" fill="#c9a227" stroke="none"/>
+      <path d="M66 73 C 76 77, 84 82, 88 89" stroke-width="1.4"/>
+    </g>
+    <!-- body -->
+    <path d="M60 36 C 54 36, 52 42, 52 49 C 52 60, 55 80, 60 96 C 65 80, 68 60, 68 49 C 68 42, 66 36, 60 36 Z" fill="#5f7050"/>
+    <circle cx="60" cy="34" r="5.5" fill="#3f362c" stroke="none"/>
+    <!-- antennae -->
+    <path d="M58 30 C 52 22, 44 18, 38 17" stroke-width="2"/>
+    <path d="M62 30 C 68 22, 76 18, 82 17" stroke-width="2"/>
+    <!-- body segments -->
+    <path d="M54 56 H66 M55 66 H65 M56 76 H64" stroke-width="1.2"/>
+  </g>
+</svg>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="Owner tools for Epic Little Treasures." />
+    <title>Owner Tools | Epic Little Treasures</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Dancing+Script:wght@600;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=7" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner page-shell">
+        <a class="brand" href="index.html" aria-label="Epic Little Treasures home">
+          <img class="brand-mark" src="assets/logo-moth.svg" alt="" aria-hidden="true" width="46" height="46" />
+          <span class="brand-text">
+            <span class="brand-name">Epic Little Treasures</span>
+            <span class="brand-note">owner tools</span>
+          </span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="index.html">View site</a>
+          <a class="nav-button" href="treasures.html">Shop page</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero page-shell">
+        <p class="eyebrow">Owner tools</p>
+        <h1>Update products &amp; workshops.</h1>
+        <p class="manager-intro">
+          Edit your listings here, then download the updated file and replace it in the site
+          folder. This page is private &mdash; it is not linked anywhere on the customer site.
+        </p>
+      </section>
+
+      <section class="section manager-section">
+        <div class="page-shell">
+          <div class="manager-help" style="margin-bottom: 24px">
+            <strong>How it works:</strong> make your changes &rarr; click <em>Generate file</em>
+            &rarr; <em>Download</em> (or Copy). That file replaces <code>products.json</code> or
+            <code>workshops.json</code> in the site. The website updates once the new file is published.
+          </div>
+
+          <div class="manager-tabs" role="tablist">
+            <button class="manager-tab is-active" data-tab="products" type="button">Products</button>
+            <button class="manager-tab" data-tab="workshops" type="button">Workshops &amp; classes</button>
+          </div>
+
+          <div class="manager-panel" id="panel-products">
+            <div class="manager-actions">
+              <button class="button button-primary" id="add-product" type="button">+ Add product</button>
+              <button class="button button-secondary" id="gen-products" type="button">Generate products.json</button>
+            </div>
+            <div class="catalog-editor" id="shop-editor"></div>
+            <div class="catalog-editor" id="product-editor"></div>
+            <div class="json-output" id="products-output" hidden>
+              <label>products.json &mdash; download or copy this
+                <textarea id="products-json" rows="12" readonly></textarea>
+              </label>
+              <div class="download-row">
+                <a class="button button-primary" id="dl-products" download="products.json">Download products.json</a>
+                <button class="button button-secondary" id="copy-products" type="button">Copy</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="manager-panel" id="panel-workshops" hidden>
+            <div class="manager-actions">
+              <button class="button button-primary" id="add-workshop" type="button">+ Add workshop</button>
+              <button class="button button-secondary" id="gen-workshops" type="button">Generate workshops.json</button>
+            </div>
+            <div class="catalog-editor" id="workshop-editor"></div>
+            <div class="json-output" id="workshops-output" hidden>
+              <label>workshops.json &mdash; download or copy this
+                <textarea id="workshops-json" rows="10" readonly></textarea>
+              </label>
+              <div class="download-row">
+                <a class="button button-primary" id="dl-workshops" download="workshops.json">Download workshops.json</a>
+                <button class="button button-secondary" id="copy-workshops" type="button">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p class="copyright page-shell">&copy; 2026 Epic Little Treasures &middot; private owner tools.</p>
+    </footer>
+
+    <script src="manager.js?v=7"></script>
+  </body>
+</html>

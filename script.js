@@ -4,6 +4,7 @@ const itemSelect = document.querySelector("#item");
 const messageField = document.querySelector("#message");
 const productTargets = document.querySelectorAll("[data-products]");
 const checkoutTarget = document.querySelector("[data-checkout]");
+const workshopTargets = document.querySelectorAll("[data-workshops]");
 
 const fallbackCatalog = {
   shop: {
@@ -232,6 +233,7 @@ const populateContactItems = (catalog) => {
       const label = productLabel(product);
       return `<option value="${label}" data-product-id="${product.id}">${label}</option>`;
     }),
+    `<option value="Workshop or class">Workshop or class</option>`,
     `<option value="Not sure yet">Not sure yet</option>`,
   ];
 
@@ -256,11 +258,126 @@ const populateContactItems = (catalog) => {
   }
 };
 
+const monthShort = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
+const parseWorkshopDate = (iso) => {
+  if (!iso) {
+    return null;
+  }
+  const date = new Date(`${iso}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const workshopCard = (workshop) => {
+  const status = workshop.status || "upcoming";
+  const date = parseWorkshopDate(workshop.date);
+  const badge = date
+    ? `<div class="workshop-date"><span class="wd-month">${monthShort[date.getMonth()]}</span><span class="wd-day">${date.getDate()}</span></div>`
+    : `<div class="workshop-date"><span class="wd-month">Soon</span></div>`;
+  const meta = [workshop.time, workshop.location || workshop.format]
+    .filter(Boolean)
+    .map((entry) => `<span>${entry}</span>`)
+    .join("");
+  const signup = workshop.signupUrl
+    ? `<a class="button button-primary" href="${workshop.signupUrl}">Save my spot</a>`
+    : "";
+
+  return `
+    <article class="workshop-card${status === "past" ? " is-past" : ""}">
+      ${badge}
+      <div class="workshop-body">
+        <span class="workshop-tag">${status === "past" ? "Past session" : "Upcoming class"}</span>
+        <h3>${workshop.title || "Teaching session"}</h3>
+        <div class="workshop-meta">${meta}</div>
+        <p>${workshop.description || ""}</p>
+        ${status === "past" ? "" : signup}
+      </div>
+    </article>
+  `;
+};
+
+const renderWorkshops = (data) => {
+  const all = Array.isArray(data.workshops) ? data.workshops : [];
+
+  workshopTargets.forEach((target) => {
+    const mode = target.dataset.workshops;
+    const limit = Number(target.dataset.limit || 0);
+    const list = mode === "upcoming"
+      ? all.filter((workshop) => (workshop.status || "upcoming") !== "past")
+      : all;
+    const rendered = (limit ? list.slice(0, limit) : list).map(workshopCard);
+
+    target.innerHTML = rendered.length
+      ? rendered.join("")
+      : `<p class="empty-state">No classes are on the calendar right now. Check back soon, or send a message to ask about the next one.</p>`;
+  });
+};
+
+const getWorkshops = async () => {
+  try {
+    const response = await fetch("workshops.json", { cache: "no-store" });
+    if (!response.ok) {
+      return { workshops: [] };
+    }
+    return response.json();
+  } catch {
+    return { workshops: [] };
+  }
+};
+
 getCatalog().then((catalog) => {
   renderProducts(catalog);
   renderCheckout(catalog);
   populateContactItems(catalog);
 });
+
+if (workshopTargets.length) {
+  getWorkshops().then(renderWorkshops);
+}
+
+/* Lively scroll-in reveal for page sections.
+   Scroll-driven (works everywhere; if a section is below the fold it waits,
+   and anything on screen shows immediately so content is never stuck hidden). */
+(() => {
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const sections = [...document.querySelectorAll("main > section")];
+  if (!sections.length) return;
+
+  const triggerLine = () => window.innerHeight * 0.88;
+
+  // Hide only the sections that start below the fold; reveal the rest now.
+  sections.forEach((section) => {
+    if (section.getBoundingClientRect().top >= triggerLine()) {
+      section.classList.add("reveal");
+    } else {
+      section.classList.add("is-visible");
+    }
+  });
+
+  let ticking = false;
+  const reveal = () => {
+    ticking = false;
+    const line = triggerLine();
+    sections.forEach((section) => {
+      if (!section.classList.contains("is-visible") && section.getBoundingClientRect().top < line) {
+        section.classList.add("is-visible");
+      }
+    });
+  };
+  const onScroll = () => {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(reveal);
+    }
+  };
+
+  // Reveal on any way the visitor might move down the page (belt and suspenders).
+  ["scroll", "resize", "wheel", "touchmove", "keydown"].forEach((evt) =>
+    window.addEventListener(evt, onScroll, { passive: true })
+  );
+  reveal();
+})();
 
 if (contactForm && formStatus) {
   contactForm.addEventListener("submit", () => {
