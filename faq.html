@@ -21,7 +21,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Dancing+Script:wght@600;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=11" />
+    <link rel="stylesheet" href="styles.css?v=12" />
   </head>
   <body>
     <header class="site-header">
@@ -33,7 +33,10 @@
             <span class="brand-note">handmade by Stephanie Davis</span>
           </span>
         </a>
-        <nav class="site-nav" aria-label="Primary navigation">
+        <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="primary-nav">
+          <span></span><span></span><span></span>
+        </button>
+        <nav class="site-nav" id="primary-nav" aria-label="Primary navigation">
           <a href="index.html">Home</a>
           <a href="treasures.html">Shop</a>
           <a href="about.html">About</a>
@@ -186,6 +189,6 @@
       <a href="contact.html">Contact</a>
     </div>
 
-    <script src="script.js?v=11"></script>
+    <script src="script.js?v=12"></script>
   </body>
 </html>

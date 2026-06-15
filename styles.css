@@ -1599,7 +1599,14 @@ h2 {
 .review-grid {
   position: relative;
   z-index: 1;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.review-grid article {
+  flex: 1 1 230px;
+  max-width: 320px;
 }
 
 /* Workshops / teaching */
@@ -2135,4 +2142,84 @@ h3 {
   display: block;
   width: 100%;
   border-radius: 2px;
+}
+
+/* ============================================================
+   Mobile hamburger nav (v12) — collapses the menu on phones
+   ============================================================ */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--cream);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.nav-toggle span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ink);
+  transition: transform 200ms ease, opacity 200ms ease;
+}
+.nav-toggle[aria-expanded="true"] span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+.nav-toggle[aria-expanded="true"] span:nth-child(2) {
+  opacity: 0;
+}
+.nav-toggle[aria-expanded="true"] span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+@media (max-width: 768px) {
+  .header-inner {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    min-height: auto;
+    gap: 10px;
+    padding-block: 12px;
+  }
+  .nav-toggle {
+    display: inline-flex;
+  }
+  .brand-mark {
+    width: 40px;
+    height: 40px;
+  }
+  .brand-name {
+    font-size: 1.3rem;
+  }
+  .brand-note {
+    font-size: 0.92rem;
+  }
+  .site-nav {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    grid-template-columns: 1fr;
+    gap: 4px;
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+  .site-nav.is-open {
+    display: flex;
+  }
+  .site-nav a,
+  .site-nav .nav-button {
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
 }

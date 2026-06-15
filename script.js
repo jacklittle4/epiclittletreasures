@@ -380,6 +380,23 @@ if (workshopTargets.length) {
   reveal();
 })();
 
+/* Mobile menu toggle */
+(() => {
+  const toggle = document.querySelector(".nav-toggle");
+  const nav = document.querySelector("#primary-nav");
+  if (!toggle || !nav) return;
+  toggle.addEventListener("click", () => {
+    const open = nav.classList.toggle("is-open");
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  nav.addEventListener("click", (event) => {
+    if (event.target.closest("a")) {
+      nav.classList.remove("is-open");
+      toggle.setAttribute("aria-expanded", "false");
+    }
+  });
+})();
+
 if (contactForm && formStatus) {
   contactForm.addEventListener("submit", () => {
     formStatus.textContent = "Sending your order inquiry...";
