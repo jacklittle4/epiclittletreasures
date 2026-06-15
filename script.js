@@ -335,6 +335,50 @@ if (workshopTargets.length) {
   getWorkshops().then(renderWorkshops);
 }
 
+/* Lively scroll-in reveal for page sections.
+   Scroll-driven (works everywhere; if a section is below the fold it waits,
+   and anything on screen shows immediately so content is never stuck hidden). */
+(() => {
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const sections = [...document.querySelectorAll("main > section")];
+  if (!sections.length) return;
+
+  const triggerLine = () => window.innerHeight * 0.88;
+
+  // Hide only the sections that start below the fold; reveal the rest now.
+  sections.forEach((section) => {
+    if (section.getBoundingClientRect().top >= triggerLine()) {
+      section.classList.add("reveal");
+    } else {
+      section.classList.add("is-visible");
+    }
+  });
+
+  let ticking = false;
+  const reveal = () => {
+    ticking = false;
+    const line = triggerLine();
+    sections.forEach((section) => {
+      if (!section.classList.contains("is-visible") && section.getBoundingClientRect().top < line) {
+        section.classList.add("is-visible");
+      }
+    });
+  };
+  const onScroll = () => {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(reveal);
+    }
+  };
+
+  // Reveal on any way the visitor might move down the page (belt and suspenders).
+  ["scroll", "resize", "wheel", "touchmove", "keydown"].forEach((evt) =>
+    window.addEventListener(evt, onScroll, { passive: true })
+  );
+  reveal();
+})();
+
 if (contactForm && formStatus) {
   contactForm.addEventListener("submit", () => {
     formStatus.textContent = "Sending your order inquiry...";
