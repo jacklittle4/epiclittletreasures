@@ -1599,6 +1599,7 @@ h2 {
 .review-grid {
   position: relative;
   z-index: 1;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
 }
 
 /* Workshops / teaching */
