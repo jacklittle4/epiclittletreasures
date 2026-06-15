@@ -297,7 +297,7 @@ p {
 }
 
 .section {
-  padding-block: 82px;
+  padding-block: 60px;
 }
 
 .intro-panel {
@@ -1917,7 +1917,7 @@ h2 {
 
 /* ---- Collage hero ---- */
 .hero-collage {
-  padding-block: clamp(40px, 6vw, 80px) clamp(48px, 7vw, 96px);
+  padding-block: clamp(32px, 4.5vw, 56px) clamp(36px, 5vw, 64px);
   background:
     radial-gradient(900px 380px at 18% 0%, rgba(181, 168, 203, 0.18), transparent 60%),
     linear-gradient(160deg, var(--sage-soft), var(--cream) 55%, var(--peach-soft));
