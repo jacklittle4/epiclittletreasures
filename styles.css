@@ -1,18 +1,36 @@
 :root {
   color-scheme: light;
-  --ink: #2f2723;
-  --body: #6b5c55;
-  --muted: #8d7c72;
-  --ivory: #fffaf1;
-  --cream: #fffdf8;
-  --linen: #f4eadc;
-  --sage: #7f9079;
-  --sage-soft: #e7ede1;
-  --rose: #b36f79;
-  --rose-soft: #f3e3e2;
-  --clay: #a97755;
-  --line: rgba(72, 55, 48, 0.16);
-  --shadow: 0 18px 48px rgba(78, 55, 44, 0.12);
+  /* Ink + neutrals */
+  --ink: #3f362c;
+  --body: #5f5347;
+  --muted: #8b7d6e;
+  /* Paper / canvas */
+  --ivory: #f7f0e1;
+  --cream: #fcf7ec;
+  --linen: #efe3cd;
+  /* Botanical palette (sage / mustard / cream / peach + lavender) */
+  --sage: #9cae87;
+  --sage-deep: #5f7050;
+  --sage-soft: #e6ece0;
+  --mustard: #c9a227;
+  --mustard-soft: #f0e3c2;
+  --peach: #e8b894;
+  --peach-soft: #f6e4d4;
+  --lavender: #b5a8cb;
+  --lavender-soft: #ece7f1;
+  --plum: #7a6388; /* deep lavender for small accents + eyebrows */
+  --clay: #b07a4f;
+  --sold: #ad8d88; /* muted mauve for sold-out tags */
+  /* Legacy aliases so existing rules pick up the new palette */
+  --rose: var(--plum);
+  --rose-soft: var(--peach-soft);
+  --line: rgba(95, 80, 60, 0.18);
+  --shadow: 0 18px 44px rgba(95, 70, 45, 0.12);
+  /* Type */
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "EB Garamond", Georgia, serif;
+  --font-script: "Dancing Script", "Brush Script MT", cursive;
+  --font-ui: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
   --max: 1160px;
 }
 
@@ -1262,5 +1280,521 @@ p {
 
   .photo-small {
     width: 52%;
+  }
+}
+
+/* =====================================================================
+   Vintage cottage refresh (v7)
+   Soft cream + sage, mustard / peach / lavender accents, pressed-botanical
+   touches, and a flowing script for small flourishes.
+   ===================================================================== */
+
+body {
+  font-family: var(--font-body);
+  background:
+    radial-gradient(1100px 460px at 50% -8%, rgba(156, 174, 135, 0.18), transparent 62%),
+    linear-gradient(180deg, var(--ivory), var(--cream) 42%, var(--ivory));
+}
+
+/* Clean sans for interface bits; serif stays for reading + display */
+.site-nav,
+.button,
+.eyebrow,
+.status-badge,
+.product-topline span,
+.product-meta-line,
+.footer-grid nav,
+.footer-contact,
+.mobile-cta-bar,
+.contact-form,
+.signup-form,
+.catalog-editor,
+.json-output,
+.manager-card-head,
+.price-list span,
+.bundle-tiers,
+.workshop-meta {
+  font-family: var(--font-ui);
+}
+
+/* Softer rounding throughout */
+.button,
+.site-nav a,
+.buy-links a,
+.contact-form input,
+.contact-form select,
+.contact-form textarea,
+.catalog-editor input,
+.catalog-editor textarea,
+.json-output textarea {
+  border-radius: 12px;
+}
+
+.product-card,
+.live-card,
+.faq-list article,
+.values-grid article,
+.buy-guide-grid article,
+.contact-panel,
+.contact-form,
+.manager-card,
+.json-output,
+.intro-panel,
+.shop-path-grid a,
+.trust-grid article,
+.review-grid article,
+.signup-panel,
+.checkout-card,
+.empty-state {
+  border-radius: 16px;
+}
+
+/* Brand lockup with the moth mark */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: auto;
+}
+
+.brand-mark {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+}
+
+.brand-text {
+  display: grid;
+  gap: 0;
+}
+
+.brand-name {
+  font-size: 1.62rem;
+  line-height: 1;
+}
+
+.brand-note {
+  margin-top: 2px;
+  color: var(--plum);
+  font-family: var(--font-script);
+  font-size: 1.04rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Softer, warmer headings */
+h1 {
+  font-size: clamp(2.8rem, 6.4vw, 5rem);
+}
+
+h2 {
+  font-size: clamp(2.05rem, 3.6vw, 3.3rem);
+}
+
+.home-hero h1 {
+  font-size: clamp(2.7rem, 6vw, 4.7rem);
+}
+
+/* Hero: warm the overlay so it feels light and cottage, not moody */
+.home-hero-overlay {
+  background:
+    linear-gradient(90deg, rgba(63, 54, 44, 0.66), rgba(63, 54, 44, 0.34) 52%, rgba(63, 54, 44, 0.06)),
+    linear-gradient(180deg, rgba(63, 54, 44, 0.02), rgba(95, 112, 80, 0.34));
+}
+
+.home-hero .eyebrow {
+  color: #f4e7d3;
+}
+
+.hero-mark {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.25));
+}
+
+/* Buttons / links in the new palette */
+.button-primary {
+  background: var(--sage-deep);
+}
+
+.button-primary:hover,
+.button-primary:focus-visible {
+  background: color-mix(in srgb, var(--sage-deep) 88%, black);
+}
+
+.site-nav .nav-button {
+  background: var(--sage-deep);
+}
+
+.text-link {
+  color: var(--sage-deep);
+}
+
+.buy-links .buy-now-link {
+  background: var(--sage-deep);
+}
+
+.buy-links a {
+  color: var(--sage-deep);
+}
+
+/* Status tags: available = sage, sold-out = muted mauve, custom = mustard */
+.status-sold-out {
+  background: var(--sold);
+}
+
+.status-custom-order {
+  background: var(--mustard);
+  color: var(--ink);
+}
+
+.footer-grid .footer-brand {
+  font-family: var(--font-display);
+}
+
+/* Deep-sage footer grounds the soft palette */
+.site-footer {
+  background: var(--sage-deep);
+}
+
+/* Pressed-botanical divider — drop <div class="botanical-divider"><img src="assets/sprig.svg" alt=""></div> between sections */
+.botanical-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 4px auto 0;
+}
+
+.botanical-divider::before,
+.botanical-divider::after {
+  content: "";
+  height: 1px;
+  width: min(130px, 24vw);
+  background: linear-gradient(90deg, transparent, var(--line), transparent);
+}
+
+.botanical-divider img {
+  width: 34px;
+  height: 34px;
+  opacity: 0.9;
+}
+
+/* Faint sprig watermarks on a couple of sections */
+.review-section,
+.welcome-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.review-section::before,
+.welcome-section::after {
+  content: "";
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  background: url("assets/sprig.svg") no-repeat center / contain;
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.review-section::before {
+  right: -34px;
+  top: -26px;
+  transform: rotate(12deg);
+}
+
+.welcome-section::after {
+  left: -40px;
+  bottom: -40px;
+  transform: rotate(-18deg) scaleX(-1);
+}
+
+/* Epic Bundles pricing tiers (Shop) */
+.bundles-section {
+  background: var(--mustard-soft);
+}
+
+.bundle-tiers {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.bundle-tiers article {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 26px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--cream);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.bundle-tiers article span {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.bundle-tiers article strong {
+  display: inline-flex;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--sage-deep);
+  color: var(--cream);
+  font-size: 1.35rem;
+}
+
+.bundle-note {
+  grid-column: 1 / -1;
+  margin: 6px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  font-weight: 600;
+  text-align: center;
+}
+
+.bundle-note strong {
+  color: var(--sage-deep);
+}
+
+/* Featured testimonial */
+.review-feature {
+  position: relative;
+  z-index: 1;
+  max-width: 880px;
+  margin: 0 auto 30px;
+  padding: clamp(26px, 4vw, 40px);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--cream);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.review-feature p {
+  margin-bottom: 14px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+  line-height: 1.2;
+}
+
+.review-feature span {
+  color: var(--plum);
+  font-family: var(--font-ui);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.review-grid {
+  position: relative;
+  z-index: 1;
+}
+
+/* Workshops / teaching */
+.workshop-list {
+  display: grid;
+  gap: 20px;
+}
+
+.workshop-card {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 26px;
+  align-items: center;
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--cream);
+  box-shadow: var(--shadow);
+}
+
+.workshop-date {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 16px 10px;
+  border-radius: 14px;
+  background: var(--sage-soft);
+  color: var(--sage-deep);
+  text-align: center;
+}
+
+.workshop-date .wd-month {
+  font-family: var(--font-ui);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.86rem;
+}
+
+.workshop-date .wd-day {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.workshop-body h3 {
+  margin-bottom: 6px;
+}
+
+.workshop-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 10px;
+  color: var(--plum);
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.workshop-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.workshop-tag {
+  display: inline-flex;
+  margin-bottom: 12px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--peach-soft);
+  color: var(--clay);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.workshop-card.is-past {
+  opacity: 0.72;
+}
+
+.workshop-card.is-past .workshop-date {
+  background: var(--linen);
+  color: var(--muted);
+}
+
+/* Short About card */
+.about-card {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(28px, 5vw, 48px);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--cream);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.about-card .about-mark {
+  width: 84px;
+  height: 84px;
+}
+
+.about-card .artist-name {
+  font-family: var(--font-script);
+  font-size: 1.7rem;
+  color: var(--plum);
+}
+
+/* Legal pages spacing */
+.compact-top {
+  padding-top: 28px;
+}
+
+/* Manager portal extras */
+.manager-intro {
+  max-width: 760px;
+}
+
+.manager-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.manager-tab {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 18px;
+  background: var(--cream);
+  color: var(--body);
+  font-family: var(--font-ui);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.manager-tab.is-active {
+  background: var(--sage-deep);
+  border-color: var(--sage-deep);
+  color: var(--cream);
+}
+
+.manager-panel[hidden] {
+  display: none;
+}
+
+.download-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.field-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.field-inline label {
+  flex: 1 1 180px;
+}
+
+.manager-help {
+  padding: 16px 18px;
+  border-left: 3px solid var(--sage);
+  border-radius: 10px;
+  background: var(--sage-soft);
+  color: var(--ink);
+}
+
+.cta-band {
+  padding-block: 72px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(120deg, var(--sage-soft), var(--peach-soft));
+}
+
+@media (max-width: 860px) {
+  .bundle-tiers {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .workshop-card {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .workshop-date {
+    justify-self: start;
+    padding: 10px 18px;
   }
 }

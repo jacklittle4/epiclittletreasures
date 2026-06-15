@@ -22,8 +22,9 @@ http://127.0.0.1:4173/
 - The contact form posts to FormSubmit using `xoxodragonfly@gmail.com`.
 - First FormSubmit use may require confirmation from the email owner before messages deliver.
 - Products can be paid for through the static checkout page using Cash App or Venmo links, with the contact form available for questions and custom work.
-- Product data lives in `products.json`.
-- The owner updater is intentionally not linked or published with the customer site. Keep it local or in a private repo, then export an updated `products.json`.
+- Product data lives in `products.json`; workshop/class data lives in `workshops.json`.
+- Owner tools live at `manager.html` (not linked anywhere on the public site, `noindex`, and disallowed in `robots.txt`). It edits products and workshops in the browser, then exports updated `products.json` / `workshops.json` to download and commit. It is client-side only — it cannot change the live site until the downloaded file is committed, and it holds no credentials. To keep it fully private, move `manager.html` + `manager.js` out of this repo.
+- Design system (vintage cottage): tokens live at the top of `styles.css` (sage / mustard / cream / peach / lavender on a deep-sepia ink). Fonts: Cormorant Garamond (display), EB Garamond (body), Dancing Script (script accents). Logo + motifs: `assets/logo-moth.svg`, `assets/sprig.svg` — swap in the real scanned moth from the business card when ready.
 - TikTok links point to `https://www.tiktok.com/@stephanie.davis015`.
 
 ## Launch checklist
