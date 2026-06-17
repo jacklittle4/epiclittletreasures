@@ -2297,3 +2297,52 @@ h3 {
     grid-template-columns: 1fr;
   }
 }
+
+/* "What's inside" / "What to expect" — pill list, a different rhythm from card rows */
+.bundle-includes-section {
+  background: var(--sage-soft);
+}
+.includes-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 48px);
+  align-items: center;
+}
+.includes-layout p {
+  margin-bottom: 0;
+}
+.includes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.includes-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--cream);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-weight: 600;
+}
+.includes-list li::before {
+  content: "";
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  background: url("assets/sprig.svg") center / contain no-repeat;
+}
+
+@media (max-width: 860px) {
+  .includes-layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
