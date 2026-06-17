@@ -2387,3 +2387,38 @@ h3 {
     transform: none;
   }
 }
+
+/* Shop catalog (v16): smaller, uniform product cards — a tidy 3-up gallery,
+   no oversized full-width feature card, shorter images */
+.product-list {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+.product-list .product-card:first-child {
+  grid-column: auto;
+  display: block;
+}
+.product-list .product-card:first-child .product-photo {
+  aspect-ratio: 1 / 0.72;
+  min-height: 0;
+}
+.product-photo {
+  aspect-ratio: 1 / 0.72;
+}
+.product-body {
+  padding: 18px;
+}
+.product-body h3 {
+  font-size: 1.18rem;
+}
+
+@media (max-width: 980px) {
+  .product-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .product-list {
+    grid-template-columns: 1fr;
+  }
+}
