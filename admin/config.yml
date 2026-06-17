@@ -1,0 +1,74 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "assets"
+public_folder: "assets"
+publish_mode: simple
+site_url: https://jacklittle4.github.io/epiclittletreasures
+
+collections:
+  - name: shop
+    label: "🛍️ Products"
+    files:
+      - name: products
+        label: "Products & shop info"
+        file: "products.json"
+        format: json
+        description: "Add, edit, or remove the items shown in the shop."
+        fields:
+          - name: shop
+            label: "Shop contact info (rarely needs changes)"
+            widget: object
+            collapsed: true
+            fields:
+              - { name: name, label: "Shop name", widget: string }
+              - { name: email, label: "Email", widget: string }
+              - { name: phone, label: "Phone (shown on site)", widget: string }
+              - { name: phoneHref, label: "Phone link (+17173194692)", widget: string }
+              - { name: facebook, label: "Facebook URL", widget: string }
+              - { name: tiktok, label: "TikTok URL", widget: string }
+              - { name: etsy, label: "Etsy URL", widget: string }
+              - { name: cashApp, label: "Cash App link", widget: string }
+              - { name: venmo, label: "Venmo link", widget: string }
+          - name: products
+            label: "Products"
+            label_singular: "Product"
+            widget: list
+            summary: "{{fields.name}} — {{fields.price}}"
+            fields:
+              - { name: name, label: "Name", widget: string }
+              - { name: category, label: "Category", widget: string, default: "Live bundles" }
+              - { name: price, label: "Price (e.g. $35 or From $45)", widget: string }
+              - { name: image, label: "Photo", widget: image, required: false }
+              - { name: alt, label: "Photo description (for accessibility)", widget: string, required: false }
+              - { name: summary, label: "Short summary", widget: text }
+              - { name: details, label: "More details (optional)", widget: text, required: false }
+              - { name: featured, label: "Show on the home page?", widget: boolean, default: false }
+              - { name: status, label: "Availability", widget: select, options: ["available", "sold-out", "custom-order"], default: "available" }
+              - { name: id, label: "ID (leave this alone)", widget: string, required: false }
+
+  - name: workshops
+    label: "🎀 Workshops"
+    files:
+      - name: workshops
+        label: "Workshops & classes"
+        file: "workshops.json"
+        format: json
+        description: "Add or edit teaching sessions."
+        fields:
+          - name: workshops
+            label: "Workshops"
+            label_singular: "Workshop"
+            widget: list
+            summary: "{{fields.title}} — {{fields.date}}"
+            fields:
+              - { name: title, label: "Title", widget: string }
+              - { name: date, label: "Date", widget: date, format: "YYYY-MM-DD" }
+              - { name: time, label: "Time (e.g. 2:00 PM ET)", widget: string, required: false }
+              - { name: location, label: "Location", widget: string, required: false }
+              - { name: format, label: "Format (Online / In studio)", widget: string, required: false, default: "Online" }
+              - { name: description, label: "Description", widget: text }
+              - { name: signupUrl, label: "Sign-up link", widget: string, required: false, default: "contact.html?item=workshop" }
+              - { name: status, label: "Status", widget: select, options: ["upcoming", "past"], default: "upcoming" }
+              - { name: id, label: "ID (leave this alone)", widget: string, required: false }

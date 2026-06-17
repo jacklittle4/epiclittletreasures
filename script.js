@@ -28,8 +28,11 @@ const getCatalog = async () => {
   }
 };
 
-const productInquiryUrl = (product) => `contact.html?item=${encodeURIComponent(product.id)}`;
-const productCheckoutUrl = (product) => `checkout.html?item=${encodeURIComponent(product.id)}`;
+const slugify = (value = "") =>
+  String(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+const productKey = (product) => product.id || slugify(product.name || "");
+const productInquiryUrl = (product) => `contact.html?item=${encodeURIComponent(productKey(product))}`;
+const productCheckoutUrl = (product) => `checkout.html?item=${encodeURIComponent(productKey(product))}`;
 const isFixedPrice = (price = "") => price.trim().startsWith("$");
 const productLabel = (product) => `${product.name} - ${product.price}`;
 const statusLabels = {
@@ -56,17 +59,18 @@ const productCard = (product, mode = "grid") => {
     ? `<div class="product-gallery" aria-label="More photos">${gallery.slice(1, 4).map((photo) => `<img src="${photo}" alt="${product.alt || product.name}" loading="lazy" />`).join("")}</div>`
     : "";
   const detail = mode === "list" ? `<p class="product-detail">${product.details || ""}</p>${galleryPreview}` : "";
+  const priceTag = product.price ? `<span class="price-tag">${product.price}</span>` : "";
 
   return `
     <article class="product-card" id="${product.id}">
       <a class="product-photo" href="${canBuyNow ? productCheckoutUrl(product) : productInquiryUrl(product)}">
         <img src="${image}" alt="${product.alt || product.name}" loading="lazy" />
         <span class="status-badge status-${status}">${statusLabels[status] || "Ask first"}</span>
+        ${priceTag}
       </a>
       <div class="product-body">
         <div class="product-topline">
           <span>${product.category || "Handmade"}</span>
-          <strong>${product.price || "Message"}</strong>
         </div>
         <h3>${product.name}</h3>
         <p>${product.summary || ""}</p>
@@ -115,7 +119,7 @@ const renderCheckout = (catalog) => {
   const shop = { ...fallbackCatalog.shop, ...(catalog.shop || {}) };
   const params = new URLSearchParams(window.location.search);
   const itemId = params.get("item");
-  const product = products.find((entry) => entry.id === itemId);
+  const product = products.find((entry) => productKey(entry) === itemId);
 
   if (!product) {
     checkoutTarget.innerHTML = `
@@ -231,7 +235,7 @@ const populateContactItems = (catalog) => {
     `<option value="">Choose an item</option>`,
     ...products.map((product) => {
       const label = productLabel(product);
-      return `<option value="${label}" data-product-id="${product.id}">${label}</option>`;
+      return `<option value="${label}" data-product-id="${productKey(product)}">${label}</option>`;
     }),
     `<option value="Workshop or class">Workshop or class</option>`,
     `<option value="Not sure yet">Not sure yet</option>`,
@@ -241,7 +245,7 @@ const populateContactItems = (catalog) => {
 
   const params = new URLSearchParams(window.location.search);
   const itemId = params.get("item");
-  const selectedProduct = products.find((product) => product.id === itemId);
+  const selectedProduct = products.find((product) => productKey(product) === itemId);
 
   if (selectedProduct) {
     const selectedValue = productLabel(selectedProduct);
@@ -377,6 +381,23 @@ if (workshopTargets.length) {
     window.addEventListener(evt, onScroll, { passive: true })
   );
   reveal();
+})();
+
+/* Mobile menu toggle */
+(() => {
+  const toggle = document.querySelector(".nav-toggle");
+  const nav = document.querySelector("#primary-nav");
+  if (!toggle || !nav) return;
+  toggle.addEventListener("click", () => {
+    const open = nav.classList.toggle("is-open");
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  nav.addEventListener("click", (event) => {
+    if (event.target.closest("a")) {
+      nav.classList.remove("is-open");
+      toggle.setAttribute("aria-expanded", "false");
+    }
+  });
 })();
 
 if (contactForm && formStatus) {
