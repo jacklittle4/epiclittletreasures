@@ -2346,3 +2346,44 @@ h3 {
     gap: 18px;
   }
 }
+
+/* Shop page — two-column hero with a real bundle photo (distinct from text-only heroes) */
+.shop-hero-feature {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr);
+  gap: clamp(28px, 4vw, 56px);
+  align-items: center;
+}
+.shop-hero-feature h1 {
+  margin-bottom: 14px;
+}
+.shop-hero-feature p:not(.eyebrow) {
+  margin-bottom: 0;
+}
+.shop-hero-photo {
+  position: relative;
+  margin: 0;
+}
+.shop-hero-photo img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  transform: rotate(1.5deg);
+}
+.shop-hero-photo .tape {
+  top: -10px;
+  left: 26px;
+  transform: rotate(-6deg);
+}
+
+@media (max-width: 860px) {
+  .shop-hero-feature {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .shop-hero-photo img {
+    transform: none;
+  }
+}
