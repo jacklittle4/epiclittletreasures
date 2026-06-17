@@ -2223,3 +2223,77 @@ h3 {
     margin-left: 0;
   }
 }
+
+/* ============================================================
+   Responsive system v13 — one coherent mobile nav + balanced grids
+   (authoritative; supersedes the older overlapping breakpoints)
+   ============================================================ */
+
+/* "How to buy" = 4 steps across one even row on desktop (no orphan card) */
+.buy-guide-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Phones + tablets (<=980): one tidy header row, nav collapses to the hamburger */
+@media (max-width: 980px) {
+  .header-inner {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: auto;
+    padding-block: 12px;
+  }
+  .nav-toggle {
+    display: inline-flex;
+  }
+  .brand-mark {
+    width: 40px;
+    height: 40px;
+  }
+  .brand-name {
+    font-size: 1.3rem;
+  }
+  .brand-note {
+    font-size: 0.92rem;
+  }
+  .site-nav {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    grid-template-columns: 1fr;
+    gap: 4px;
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+  .site-nav.is-open {
+    display: flex;
+  }
+  .site-nav a,
+  .site-nav .nav-button {
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+  /* balanced grids: 4-up cards become 2x2, 3-up stays 3 across */
+  .buy-guide-grid,
+  .trust-grid,
+  .shop-path-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .values-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Phones (<=600): single column card grids, full-width tap targets */
+@media (max-width: 600px) {
+  .buy-guide-grid,
+  .trust-grid,
+  .shop-path-grid,
+  .values-grid {
+    grid-template-columns: 1fr;
+  }
+}
