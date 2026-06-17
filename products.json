@@ -64,19 +64,6 @@
       "status": "available"
     },
     {
-      "id": "graffiti-art-print",
-      "name": "Graffiti Art print",
-      "category": "Prints",
-      "price": "$24.70",
-      "image": "assets/custom-materials.png",
-      "alt": "Colorful graffiti art print preview",
-      "summary": "A printed Graffiti Art design with free shipping.",
-      "details": "Shown from a Canva listing. Printed option is listed at $24.70 shipped.",
-      "featured": true,
-      "available": true,
-      "status": "available"
-    },
-    {
       "id": "graffiti-art-digital",
       "name": "Graffiti Art digital",
       "category": "Digital",
