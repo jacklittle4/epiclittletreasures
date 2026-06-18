@@ -5,7 +5,7 @@ backend:
 media_folder: "assets"
 public_folder: "assets"
 publish_mode: simple
-site_url: https://jacklittle4.github.io/epiclittletreasures
+site_url: https://www.epiclittletreasures.com
 
 collections:
   - name: shop
@@ -66,6 +66,7 @@ collections:
               - { name: title, label: "Title", widget: string }
               - { name: date, label: "Date", widget: date, format: "YYYY-MM-DD" }
               - { name: time, label: "Time (e.g. 2:00 PM ET)", widget: string, required: false }
+              - { name: price, label: "Price (e.g. $50)", widget: string, required: false }
               - { name: location, label: "Location", widget: string, required: false }
               - { name: format, label: "Format (Online / In studio)", widget: string, required: false, default: "Online" }
               - { name: description, label: "Description", widget: text }

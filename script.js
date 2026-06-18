@@ -278,7 +278,7 @@ const workshopCard = (workshop) => {
   const badge = date
     ? `<div class="workshop-date"><span class="wd-month">${monthShort[date.getMonth()]}</span><span class="wd-day">${date.getDate()}</span></div>`
     : `<div class="workshop-date"><span class="wd-month">Soon</span></div>`;
-  const meta = [workshop.time, workshop.location || workshop.format]
+  const meta = [workshop.price, workshop.time, workshop.location || workshop.format]
     .filter(Boolean)
     .map((entry) => `<span>${entry}</span>`)
     .join("");

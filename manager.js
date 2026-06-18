@@ -100,6 +100,7 @@ function workshopCard(workshop, index) {
         <label>Title<input data-field="title" value="${attr(workshop.title)}" /></label>
         <label>Date<input type="date" data-field="date" value="${attr(workshop.date)}" /></label>
         <label>Time (e.g. 2:00 PM ET)<input data-field="time" value="${attr(workshop.time)}" /></label>
+        <label>Price (e.g. $50)<input data-field="price" value="${attr(workshop.price)}" /></label>
         <label>Location<input data-field="location" value="${attr(workshop.location)}" /></label>
         <label>Format (Online / In studio)<input data-field="format" value="${attr(workshop.format)}" /></label>
         <label>Sign-up link<input data-field="signupUrl" value="${attr(workshop.signupUrl)}" /></label>
@@ -158,12 +159,13 @@ function collectProducts() {
 
 function collectWorkshops() {
   return [...workshopEditor.querySelectorAll(".manager-card")].map((card) => {
-    const f = readCard(card, ["title", "date", "time", "location", "format", "signupUrl", "status", "description"]);
+    const f = readCard(card, ["title", "date", "time", "price", "location", "format", "signupUrl", "status", "description"]);
     return {
       id: card.dataset.id || slug(f.title),
       title: f.title,
       date: f.date,
       time: f.time,
+      price: f.price,
       location: f.location,
       format: f.format,
       description: f.description,

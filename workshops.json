@@ -1,13 +1,14 @@
 {
   "workshops": [
     {
-      "id": "junk-journal-basics",
-      "title": "Junk Journal Basics: Build Your First Signature",
-      "date": "2026-07-12",
+      "id": "paper-bag-journal",
+      "title": "Paper Bag Junk Journal",
+      "date": "2026-08-03",
       "time": "2:00 PM ET",
+      "price": "$50",
       "location": "Live on TikTok @stephanie.davis015",
       "format": "Online",
-      "description": "A relaxed, beginner-friendly class on folding signatures, choosing papers, and a simple stitched binding. Bring whatever paper you have on hand and we will make something pretty together.",
+      "description": "Make your own journal out of brown paper bags! What to bring: at least 4 brown paper bags, any kind of cardstock, string, a needle, something to poke holes with, and any paper you like for the pages.",
       "signupUrl": "contact.html?item=workshop",
       "status": "upcoming"
     }
