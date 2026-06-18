@@ -191,7 +191,7 @@ const renderCheckout = (catalog) => {
         <input type="hidden" name="_subject" value="Epic Little Treasures checkout follow-up" />
         <input type="hidden" name="_template" value="table" />
         <input type="hidden" name="_captcha" value="false" />
-        <input type="hidden" name="_next" value="https://jacklittle4.github.io/epiclittletreasures/thank-you.html" />
+        <input type="hidden" name="_next" value="https://www.epiclittletreasures.com/thank-you.html" />
         <input type="hidden" name="item" value="${productLabel(product)}" />
         <h3 class="form-title">Send shipping or pickup details</h3>
         <div>
