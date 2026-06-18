@@ -3,4 +3,4 @@ Allow: /
 Disallow: /manager.html
 Disallow: /admin/
 
-Sitemap: https://jacklittle4.github.io/epiclittletreasures/sitemap.xml
+Sitemap: https://www.epiclittletreasures.com/sitemap.xml

@@ -2434,3 +2434,10 @@ h3 {
   margin-top: 0;
   margin-bottom: 12px;
 }
+
+/* Builder credit link in the footer */
+.copyright a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
