@@ -1,16 +1,16 @@
 {
   "workshops": [
     {
-      "id": "paper-bag-journal",
-      "title": "Paper Bag Junk Journal",
-      "date": "2026-08-03",
-      "time": "2:00 PM ET",
       "price": "$50",
+      "time": "6 PM ET",
+      "date": "2026-08-03",
+      "status": "upcoming",
       "location": "Live on TikTok @stephanie.davis015",
-      "format": "Online",
-      "description": "Make your own journal out of brown paper bags! What to bring: at least 4 brown paper bags, any kind of cardstock, string, a needle, something to poke holes with, and any paper you like for the pages.",
       "signupUrl": "contact.html?item=workshop",
-      "status": "upcoming"
+      "format": "Online",
+      "title": "Paper Bag Junk Journal",
+      "id": "paper-bag-journal",
+      "description": "Make your own journal out of brown paper bags! What to bring: at least 4 brown paper bags, any kind of cardstock, string, a needle, something to poke holes with, and any paper you like for the pages."
     }
   ]
 }
