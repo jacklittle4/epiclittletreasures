@@ -5,6 +5,7 @@ const messageField = document.querySelector("#message");
 const productTargets = document.querySelectorAll("[data-products]");
 const checkoutTarget = document.querySelector("[data-checkout]");
 const workshopTargets = document.querySelectorAll("[data-workshops]");
+const bundleTiersTarget = document.querySelector("[data-bundle-tiers]");
 
 const fallbackCatalog = {
   shop: {
@@ -35,6 +36,14 @@ const productInquiryUrl = (product) => `contact.html?item=${encodeURIComponent(p
 const productCheckoutUrl = (product) => `checkout.html?item=${encodeURIComponent(productKey(product))}`;
 const isFixedPrice = (price = "") => price.trim().startsWith("$");
 const productLabel = (product) => `${product.name} - ${product.price}`;
+const bundlePullCount = (product = {}) => {
+  const match = String(product.name || "").match(/(\d+)\s*pulls?/i);
+  return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
+};
+const bundleTierLabel = (product = {}) => {
+  const match = String(product.name || "").match(/(\d+)\s*pulls?/i);
+  return match ? `${match[1]} pulls` : product.name || "";
+};
 const statusLabels = {
   available: "Available",
   "sold-out": "Sold out",
@@ -108,6 +117,28 @@ const renderProducts = (catalog) => {
       ? rendered.join("")
       : `<p class="empty-state">No products are listed yet.</p>`;
   });
+};
+
+const renderBundleTiers = (catalog) => {
+  if (!bundleTiersTarget) {
+    return;
+  }
+  const products = Array.isArray(catalog.products) ? catalog.products : [];
+  const bundles = products
+    .filter((product) => String(product.category || "").toLowerCase() === "live bundles")
+    .sort((a, b) => bundlePullCount(a) - bundlePullCount(b));
+  if (!bundles.length) {
+    return;
+  }
+  const tiles = bundles
+    .map((product) => `<article><span>${bundleTierLabel(product)}</span><strong>${product.price || ""}</strong></article>`)
+    .join("");
+  const note = bundleTiersTarget.querySelector(".bundle-note");
+  if (note) {
+    note.insertAdjacentHTML("beforebegin", tiles);
+  } else {
+    bundleTiersTarget.insertAdjacentHTML("afterbegin", tiles);
+  }
 };
 
 const renderCheckout = (catalog) => {
@@ -331,6 +362,7 @@ const getWorkshops = async () => {
 
 getCatalog().then((catalog) => {
   renderProducts(catalog);
+  renderBundleTiers(catalog);
   renderCheckout(catalog);
   populateContactItems(catalog);
 });
