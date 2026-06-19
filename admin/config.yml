@@ -6,70 +6,75 @@ media_folder: "assets"
 public_folder: "assets"
 publish_mode: simple
 site_url: https://www.epiclittletreasures.com
+display_url: https://www.epiclittletreasures.com
+logo_url: https://www.epiclittletreasures.com/assets/logo-moth.svg
 
 collections:
   - name: shop
     label: "🛍️ Products"
+    description: "Everything shown in the Shop. Click a product to edit it, or use the New Product button to add one."
     files:
       - name: products
         label: "Products & shop info"
         file: "products.json"
         format: json
-        description: "Add, edit, or remove the items shown in the shop."
         fields:
-          - name: shop
-            label: "Shop contact info (rarely needs changes)"
-            widget: object
-            collapsed: true
-            fields:
-              - { name: name, label: "Shop name", widget: string }
-              - { name: email, label: "Email", widget: string }
-              - { name: phone, label: "Phone (shown on site)", widget: string }
-              - { name: phoneHref, label: "Phone link (+17173194692)", widget: string }
-              - { name: facebook, label: "Facebook URL", widget: string }
-              - { name: tiktok, label: "TikTok URL", widget: string }
-              - { name: etsy, label: "Etsy URL", widget: string }
-              - { name: cashApp, label: "Cash App link", widget: string }
-              - { name: venmo, label: "Venmo link", widget: string }
           - name: products
             label: "Products"
             label_singular: "Product"
             widget: list
             summary: "{{fields.name}} — {{fields.price}}"
+            hint: "Each card on the Shop page. Use the + button to add one, the trash icon to remove one, and drag the handle to reorder."
             fields:
-              - { name: name, label: "Name", widget: string }
-              - { name: category, label: "Category", widget: string, default: "Live bundles" }
-              - { name: price, label: "Price (e.g. $35 or From $45)", widget: string }
-              - { name: image, label: "Photo", widget: image, required: false }
-              - { name: alt, label: "Photo description (for accessibility)", widget: string, required: false }
-              - { name: summary, label: "Short summary", widget: text }
-              - { name: details, label: "More details (optional)", widget: text, required: false }
-              - { name: featured, label: "Show on the home page?", widget: boolean, default: false }
-              - { name: status, label: "Availability", widget: select, options: ["available", "sold-out", "custom-order"], default: "available" }
-              - { name: id, label: "ID (leave this alone)", widget: string, required: false }
+              - { name: name, label: "Name", widget: string, hint: "What the item is called, e.g. 15-pull bundle." }
+              - { name: image, label: "Photo", widget: image, required: false, choose_url: false, hint: "Click here to upload a photo from your computer (JPG or PNG). Leave blank for no photo." }
+              - { name: price, label: "Price", widget: string, hint: "Type it exactly how it should show, e.g. $45 or From $45." }
+              - { name: status, label: "Availability", widget: select, options: ["available", "sold-out", "custom-order"], default: "available", hint: "Choose sold-out to show it as sold out, or custom-order for made-to-order items." }
+              - { name: summary, label: "Short description", widget: text, hint: "One or two sentences shown under the name." }
+              - { name: details, label: "More details (optional)", widget: text, required: false, hint: "Extra info shown when someone opens the item. Optional." }
+              - { name: category, label: "Category", widget: string, default: "Live bundles", hint: "A small group label, e.g. Live bundles." }
+              - { name: featured, label: "Show on the home page?", widget: boolean, default: false, hint: "Turn on to also feature this item on the home page." }
+              - { name: alt, label: "Photo description", widget: string, required: false, hint: "A short description of the photo for screen readers. Optional but kind." }
+              - { name: id, label: "ID — leave this alone", widget: string, required: false, hint: "Used by the website. Please don't change it." }
+          - name: shop
+            label: "Shop contact & payment info"
+            widget: object
+            collapsed: true
+            hint: "Your links and payment handles. These rarely change — click to expand if you need to."
+            fields:
+              - { name: name, label: "Shop name", widget: string }
+              - { name: email, label: "Email", widget: string }
+              - { name: phone, label: "Phone (shown on the site)", widget: string }
+              - { name: phoneHref, label: "Phone link", widget: string, hint: "Same number, no spaces, with a + in front: +17173194692" }
+              - { name: facebook, label: "Facebook URL", widget: string }
+              - { name: tiktok, label: "TikTok URL", widget: string }
+              - { name: etsy, label: "Etsy URL", widget: string }
+              - { name: cashApp, label: "Cash App link", widget: string }
+              - { name: venmo, label: "Venmo link", widget: string }
 
   - name: workshops
-    label: "🎀 Workshops"
+    label: "🎀 Classes"
+    description: "Your teaching classes, shown on the Workshops page."
     files:
       - name: workshops
-        label: "Workshops & classes"
+        label: "Classes & workshops"
         file: "workshops.json"
         format: json
-        description: "Add or edit teaching sessions."
         fields:
           - name: workshops
-            label: "Workshops"
-            label_singular: "Workshop"
+            label: "Classes"
+            label_singular: "Class"
             widget: list
             summary: "{{fields.title}} — {{fields.date}}"
+            hint: "Use the + button to add a class. Fill in the date, price, and what to bring."
             fields:
-              - { name: title, label: "Title", widget: string }
-              - { name: date, label: "Date", widget: date, format: "YYYY-MM-DD" }
-              - { name: time, label: "Time (e.g. 2:00 PM ET)", widget: string, required: false }
-              - { name: price, label: "Price (e.g. $50)", widget: string, required: false }
-              - { name: location, label: "Location", widget: string, required: false }
-              - { name: format, label: "Format (Online / In studio)", widget: string, required: false, default: "Online" }
-              - { name: description, label: "Description", widget: text }
-              - { name: signupUrl, label: "Sign-up link", widget: string, required: false, default: "contact.html?item=workshop" }
-              - { name: status, label: "Status", widget: select, options: ["upcoming", "past"], default: "upcoming" }
-              - { name: id, label: "ID (leave this alone)", widget: string, required: false }
+              - { name: title, label: "Class name", widget: string, hint: "e.g. Paper Bag Junk Journal." }
+              - { name: date, label: "Date", widget: date, format: "YYYY-MM-DD", hint: "Pick the date of the class." }
+              - { name: time, label: "Time", widget: string, required: false, hint: "e.g. 2:00 PM ET." }
+              - { name: price, label: "Price", widget: string, required: false, hint: "e.g. $50." }
+              - { name: location, label: "Where", widget: string, required: false, hint: "e.g. Live on TikTok @stephanie.davis015." }
+              - { name: format, label: "Format", widget: string, required: false, default: "Online", hint: "Online or In studio." }
+              - { name: description, label: "Details / what to bring", widget: text, hint: "Describe the class and list any supplies people should bring." }
+              - { name: status, label: "Status", widget: select, options: ["upcoming", "past"], default: "upcoming", hint: "upcoming shows it as a coming-up class; past moves it down." }
+              - { name: signupUrl, label: "Sign-up link", widget: string, required: false, default: "contact.html?item=workshop", hint: "Leave as-is to send people to the contact form." }
+              - { name: id, label: "ID — leave this alone", widget: string, required: false, hint: "Used by the website. Please don't change it." }
