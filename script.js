@@ -108,7 +108,7 @@ const renderProducts = (catalog) => {
     const mode = target.dataset.products;
     const limit = Number(target.dataset.limit || 0);
     const list = mode === "featured" || mode === "latest"
-      ? products.filter((product) => product.featured && normalizeStatus(product) === "available")
+      ? products.filter((product) => normalizeStatus(product) === "available")
       : products;
     const rendered = (limit ? list.slice(0, limit) : list).map((product) => {
       return productCard(product, mode === "all" ? "list" : "grid");

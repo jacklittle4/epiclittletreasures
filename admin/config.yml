@@ -18,10 +18,10 @@ collections:
   - name: shop
     label: "🛍️ Products"
     icon: storefront
-    description: "Everything shown in the Shop. Click a product to edit it, or use the New Product button to add one."
+    description: "Your shop items. Tap one to edit it, or use the + button to add a new one."
     files:
       - name: products
-        label: "Products & shop info"
+        label: "Products & the homepage deal"
         file: "products.json"
         format: json
         fields:
@@ -30,26 +30,23 @@ collections:
             label_singular: "Product"
             widget: list
             summary: "{{fields.name}} — {{fields.price}}"
-            hint: "Each card on the Shop page. Use the + button to add one, the trash icon to remove one, and drag the handle to reorder."
+            hint: "Tap + to add an item, the trash icon to remove one, and drag to reorder."
             fields:
-              - { name: name, label: "Name", widget: string, hint: "What the item is called, e.g. 15-pull bundle." }
-              - { name: image, label: "Photo", widget: image, required: false, choose_url: false, hint: "Click here to upload a photo from your computer (JPG or PNG). Leave blank for no photo." }
-              - { name: price, label: "Price", widget: string, hint: "Type it exactly how it should show, e.g. $45 or From $45." }
-              - { name: status, label: "Availability", widget: select, options: ["available", "sold-out", "custom-order"], default: "available", hint: "Choose sold-out to show it as sold out, or custom-order for made-to-order items." }
-              - { name: summary, label: "Short description", widget: text, hint: "One or two sentences shown under the name." }
-              - { name: details, label: "More details (optional)", widget: text, required: false, hint: "Extra info shown when someone opens the item. Optional." }
-              - { name: category, label: "Category", widget: string, default: "Live bundles", hint: "A small group label, e.g. Live bundles." }
-              - { name: featured, label: "Show on the home page?", widget: boolean, default: false, hint: "Turn on to also feature this item on the home page." }
-              - { name: alt, label: "Photo description", widget: string, required: false, hint: "A short description of the photo for screen readers. Optional but kind." }
+              - { name: name, label: "Name", widget: string, hint: "e.g. 15-pull bundle" }
+              - { name: image, label: "Photo", widget: image, required: false, choose_url: false, hint: "Tap to upload a photo from your device." }
+              - { name: price, label: "Price", widget: string, hint: "Type it exactly how it should show, e.g. $45" }
+              - { name: status, label: "Availability", widget: select, default: "available", options: [{ label: "Available", value: "available" }, { label: "Sold out", value: "sold-out" }, { label: "Made to order", value: "custom-order" }] }
+              - { name: summary, label: "Short description", widget: text, hint: "A sentence or two shown under the name." }
+              - { name: category, label: "Type", widget: select, default: "Live bundles", options: [{ label: "Live bundle", value: "Live bundles" }, { label: "Custom / other", value: "Custom" }], hint: "Live bundle shows it in the pull-bundle prices at the top of the shop." }
               - { name: id, widget: hidden }
           - name: shop
             label: "Homepage deal & shop info"
             widget: object
-            collapsed: false
-            hint: "The homepage deal banner, plus your links and payment handles."
+            collapsed: true
+            hint: "The homepage deal banner and your links. These rarely change — tap to open."
             fields:
-              - { name: promoEnabled, label: "Show the homepage deal banner?", widget: boolean, default: false, hint: "Turn on to show the little announcement ribbon at the top of the home page." }
-              - { name: promoText, label: "Deal banner text", widget: string, required: false, default: "5 extra envelopes FREE with every order!", hint: "The words shown in the homepage ribbon. Keep it short and sweet." }
+              - { name: promoEnabled, label: "Show the homepage deal banner?", widget: boolean, default: false, hint: "Turn on to show the ribbon at the top of the home page." }
+              - { name: promoText, label: "Deal banner text", widget: string, required: false, default: "5 extra envelopes FREE with every order!", hint: "Keep it short and sweet." }
               - { name: name, label: "Shop name", widget: string }
               - { name: email, label: "Email", widget: string }
               - { name: phone, label: "Phone (shown on the site)", widget: string }
@@ -63,18 +60,18 @@ collections:
   - name: live
     label: "🔴 Live now"
     icon: sensors
-    description: "Turn the homepage 'Live now' banner ON when you start a TikTok LIVE, and OFF when you finish."
+    description: "Flip this ON when you start a TikTok LIVE and OFF when you finish. It shows a banner on the home page."
     files:
       - name: live
         label: "Live banner"
         file: "live.json"
         format: json
         fields:
-          - { name: isLive, label: "Show the Live banner? (ON = you are live)", widget: boolean, default: false, hint: "Turn ON when you start your TikTok LIVE, and OFF when you're done." }
-          - { name: heading, label: "Headline", widget: string, default: "I'm live on TikTok right now!", hint: "The big line on the banner." }
-          - { name: subtext, label: "Small line (optional)", widget: string, required: false, hint: "One short sentence under the headline. Optional." }
-          - { name: buttonLabel, label: "Button text", widget: string, default: "Watch the live", hint: "Text on the button." }
-          - { name: url, label: "Live link", widget: string, default: "https://www.tiktok.com/@stephanie.davis015/live", hint: "Where the button sends people. Leave as-is unless your TikTok handle changes." }
+          - { name: isLive, label: "Are you live right now?", widget: boolean, default: false, hint: "ON shows the Live banner on the home page. Turn it OFF when you're done." }
+          - { name: heading, label: "Message (optional)", widget: string, required: false, default: "I'm live on TikTok right now!", hint: "The big line on the banner. Leave as-is if unsure." }
+          - { name: subtext, label: "Small line (optional)", widget: string, required: false, hint: "One short sentence under the message." }
+          - { name: buttonLabel, widget: hidden, default: "Watch the live" }
+          - { name: url, widget: hidden, default: "https://www.tiktok.com/@stephanie.davis015/live" }
 
   - name: workshops
     label: "🎀 Classes"
@@ -82,7 +79,7 @@ collections:
     description: "Your teaching classes, shown on the Workshops page."
     files:
       - name: workshops
-        label: "Classes & workshops"
+        label: "Classes"
         file: "workshops.json"
         format: json
         fields:
@@ -91,15 +88,13 @@ collections:
             label_singular: "Class"
             widget: list
             summary: "{{fields.title}} — {{fields.date}}"
-            hint: "Use the + button to add a class. Fill in the date, price, and what to bring."
+            hint: "Tap + to add a class. Delete a class when it's over."
             fields:
-              - { name: title, label: "Class name", widget: string, hint: "e.g. Paper Bag Junk Journal." }
+              - { name: title, label: "Class name", widget: string, hint: "e.g. Paper Bag Junk Journal" }
               - { name: date, label: "Date", widget: datetime, type: date, format: "YYYY-MM-DD", time_format: false, hint: "Pick the date of the class." }
-              - { name: time, label: "Time", widget: string, required: false, hint: "e.g. 2:00 PM ET." }
-              - { name: price, label: "Price", widget: string, required: false, hint: "e.g. $50." }
-              - { name: location, label: "Where", widget: string, required: false, hint: "e.g. Live on TikTok @stephanie.davis015." }
-              - { name: format, label: "Format", widget: string, required: false, default: "Online", hint: "Online or In studio." }
-              - { name: description, label: "Details / what to bring", widget: text, hint: "Describe the class and list any supplies people should bring." }
-              - { name: status, label: "Status", widget: select, options: ["upcoming", "past"], default: "upcoming", hint: "upcoming shows it as a coming-up class; past moves it down." }
-              - { name: signupUrl, label: "Sign-up link", widget: string, required: false, default: "contact.html?item=workshop", hint: "Leave as-is to send people to the contact form." }
+              - { name: time, label: "Time", widget: string, required: false, hint: "e.g. 6 PM ET" }
+              - { name: price, label: "Price", widget: string, required: false, hint: "e.g. $50" }
+              - { name: location, label: "Where", widget: string, required: false, default: "Live on TikTok @stephanie.davis015", hint: "Where the class happens." }
+              - { name: description, label: "Details / what to bring", widget: text, hint: "Describe the class and list any supplies to bring." }
+              - { name: signupUrl, widget: hidden, default: "contact.html?item=workshop" }
               - { name: id, widget: hidden }
