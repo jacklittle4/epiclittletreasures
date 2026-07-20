@@ -6,6 +6,8 @@ const productTargets = document.querySelectorAll("[data-products]");
 const checkoutTarget = document.querySelector("[data-checkout]");
 const workshopTargets = document.querySelectorAll("[data-workshops]");
 const bundleTiersTarget = document.querySelector("[data-bundle-tiers]");
+const promoTarget = document.querySelector("[data-promo]");
+const liveTarget = document.querySelector("[data-live]");
 
 const fallbackCatalog = {
   shop: {
@@ -92,7 +94,6 @@ const productCard = (product, mode = "grid") => {
               : `<a class="buy-now-link" href="${productInquiryUrl(product)}">${status === "sold-out" ? "Ask next batch" : "Start request"}</a>`
           }
           <a href="${productInquiryUrl(product)}">Ask a question</a>
-          <a href="${fallbackCatalog.shop.tiktok}">Watch on TikTok</a>
         </div>
       </div>
     </article>
@@ -131,7 +132,13 @@ const renderBundleTiers = (catalog) => {
     return;
   }
   const tiles = bundles
-    .map((product) => `<article><span>${bundleTierLabel(product)}</span><strong>${product.price || ""}</strong></article>`)
+    .map((product) => {
+      const status = normalizeStatus(product);
+      const canBuyNow = status === "available" && isFixedPrice(product.price || "");
+      const href = canBuyNow ? productCheckoutUrl(product) : productInquiryUrl(product);
+      const cta = canBuyNow ? "Buy now" : status === "sold-out" ? "Ask next batch" : "Ask about this";
+      return `<a class="bundle-tier" href="${href}" aria-label="${bundleTierLabel(product)} bundle ${product.price || ""} - ${cta}"><span>${bundleTierLabel(product)}</span><strong>${product.price || ""}</strong><span class="bundle-tier-cta">${cta}</span></a>`;
+    })
     .join("");
   const note = bundleTiersTarget.querySelector(".bundle-note");
   if (note) {
@@ -139,6 +146,18 @@ const renderBundleTiers = (catalog) => {
   } else {
     bundleTiersTarget.insertAdjacentHTML("afterbegin", tiles);
   }
+};
+
+const renderPromo = (catalog) => {
+  if (!promoTarget) return;
+  const shop = { ...fallbackCatalog.shop, ...(catalog.shop || {}) };
+  const text = (shop.promoText || "").trim();
+  if (!shop.promoEnabled || !text) {
+    promoTarget.hidden = true;
+    return;
+  }
+  promoTarget.innerHTML = `<span class="promo-tape" aria-hidden="true"></span><p class="promo-text">${escapeHtml(text)}</p>`;
+  promoTarget.hidden = false;
 };
 
 const renderCheckout = (catalog) => {
@@ -255,6 +274,22 @@ const renderCheckout = (catalog) => {
   `;
 };
 
+const blindbagFields = document.querySelector("#blindbag-fields");
+const isBlindBagValue = () => {
+  if (!itemSelect) return false;
+  const opt = itemSelect.selectedOptions[0];
+  const cat = (opt && opt.dataset.category ? opt.dataset.category : "").toLowerCase();
+  return cat === "live bundles";
+};
+const toggleBlindBagFields = () => {
+  if (!blindbagFields) return;
+  const show = isBlindBagValue();
+  blindbagFields.hidden = !show;
+  blindbagFields.querySelectorAll("input, select, textarea").forEach((field) => {
+    field.disabled = !show;
+  });
+};
+
 const populateContactItems = (catalog) => {
   if (!itemSelect) {
     return;
@@ -266,7 +301,7 @@ const populateContactItems = (catalog) => {
     `<option value="">Choose an item</option>`,
     ...products.map((product) => {
       const label = productLabel(product);
-      return `<option value="${label}" data-product-id="${productKey(product)}">${label}</option>`;
+      return `<option value="${label}" data-product-id="${productKey(product)}" data-category="${product.category || ""}">${label}</option>`;
     }),
     `<option value="Workshop or class">Workshop or class</option>`,
     `<option value="Not sure yet">Not sure yet</option>`,
@@ -348,6 +383,42 @@ const renderWorkshops = (data) => {
   });
 };
 
+const escapeHtml = (value = "") =>
+  String(value).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+
+const renderLive = (data) => {
+  if (!liveTarget) return;
+  if (!(data && data.isLive)) {
+    liveTarget.hidden = true;
+    liveTarget.innerHTML = "";
+    return;
+  }
+  const url = data.url || fallbackCatalog.shop.tiktok;
+  const heading = escapeHtml(data.heading || "I'm live on TikTok right now!");
+  const subtext = escapeHtml(data.subtext || "");
+  const buttonLabel = escapeHtml(data.buttonLabel || "Watch the live");
+  liveTarget.innerHTML = `
+    <div class="live-banner-inner page-shell">
+      <span class="live-dot" aria-hidden="true"></span>
+      <div class="live-banner-copy">
+        <p class="live-banner-tag">Live now</p>
+        <p class="live-banner-heading">${heading}</p>
+        ${subtext ? `<p class="live-banner-sub">${subtext}</p>` : ""}
+      </div>
+      <a class="button button-primary live-banner-btn" href="${escapeHtml(url)}" target="_blank" rel="noopener">${buttonLabel}</a>
+    </div>`;
+  liveTarget.hidden = false;
+};
+
+const getLive = async () => {
+  try {
+    const r = await fetch("live.json", { cache: "no-store" });
+    return r.ok ? r.json() : { isLive: false };
+  } catch {
+    return { isLive: false };
+  }
+};
+
 const getWorkshops = async () => {
   try {
     const response = await fetch("workshops.json", { cache: "no-store" });
@@ -363,12 +434,22 @@ const getWorkshops = async () => {
 getCatalog().then((catalog) => {
   renderProducts(catalog);
   renderBundleTiers(catalog);
+  renderPromo(catalog);
   renderCheckout(catalog);
   populateContactItems(catalog);
+  toggleBlindBagFields();
 });
 
 if (workshopTargets.length) {
   getWorkshops().then(renderWorkshops);
+}
+
+if (liveTarget) {
+  getLive().then(renderLive);
+}
+
+if (itemSelect) {
+  itemSelect.addEventListener("change", toggleBlindBagFields);
 }
 
 /* Lively scroll-in reveal for page sections.

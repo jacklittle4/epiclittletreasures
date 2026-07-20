@@ -1,5 +1,7 @@
 {
   "shop": {
+    "promoEnabled": true,
+    "promoText": "5 extra envelopes FREE with every order!",
     "venmo": "https://venmo.com/StephanieDavis1",
     "facebook": "https://www.facebook.com/share/1bYBP86bQM/",
     "name": "Epic Little Treasures",

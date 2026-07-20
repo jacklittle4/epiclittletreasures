@@ -556,6 +556,12 @@ p {
 .buy-links a:hover,
 .buy-links a:focus-visible {
   border-color: var(--sage);
+  background: var(--sage-soft);
+}
+
+.buy-links .buy-now-link:hover,
+.buy-links .buy-now-link:focus-visible {
+  filter: brightness(0.94);
 }
 
 .live-section {
@@ -1524,7 +1530,7 @@ h2 {
   gap: 16px;
 }
 
-.bundle-tiers article {
+.bundle-tiers .bundle-tier {
   display: grid;
   gap: 8px;
   justify-items: center;
@@ -1534,22 +1540,39 @@ h2 {
   background: var(--cream);
   box-shadow: var(--shadow);
   text-align: center;
+  color: inherit;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
 }
 
-.bundle-tiers article span {
+.bundle-tiers .bundle-tier:hover,
+.bundle-tiers .bundle-tier:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--sage-deep);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.12);
+}
+
+.bundle-tiers .bundle-tier span:first-child {
   color: var(--ink);
   font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 700;
 }
 
-.bundle-tiers article strong {
+.bundle-tiers .bundle-tier strong {
   display: inline-flex;
   padding: 8px 18px;
   border-radius: 999px;
   background: var(--sage-deep);
   color: var(--cream);
   font-size: 1.35rem;
+}
+
+.bundle-tier-cta {
+  color: var(--rose);
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .bundle-note {
@@ -2124,7 +2147,7 @@ h3 {
 .workshop-date .wd-day {
   font-size: 2rem;
 }
-.bundle-tiers article span {
+.bundle-tiers .bundle-tier span:first-child {
   font-size: 1.3rem;
 }
 
@@ -2440,4 +2463,128 @@ h3 {
   color: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+/* Homepage deal ribbon (v21) — editable from the CMS shop info */
+.promo-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0;
+  padding: 12px 44px;
+  border-bottom: 1px solid var(--line);
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.16) 0 8px, rgba(255, 255, 255, 0) 8px 16px),
+    linear-gradient(120deg, var(--sage-soft), var(--peach-soft));
+  text-align: center;
+}
+.promo-banner[hidden] {
+  display: none;
+}
+.promo-banner .promo-text {
+  margin: 0;
+  color: var(--sage-deep);
+  font-family: var(--font-script);
+  font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+.promo-banner .promo-tape {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  width: 34px;
+  height: 34px;
+  transform: translateY(-50%);
+  background: url("assets/sprig.svg") center / contain no-repeat;
+  opacity: 0.85;
+}
+@media (max-width: 600px) {
+  .promo-banner {
+    padding: 10px 30px;
+  }
+  .promo-banner .promo-tape {
+    left: 8px;
+    width: 26px;
+    height: 26px;
+  }
+}
+
+/* "Live now" banner (v21) — link-out only; TikTok LIVE can't be embedded */
+.live-banner {
+  background: linear-gradient(120deg, var(--peach-soft), var(--mustard-soft));
+  border-bottom: 1px solid var(--line);
+}
+.live-banner[hidden] {
+  display: none;
+}
+.live-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-block: 14px;
+}
+.live-dot {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #d64545;
+  box-shadow: 0 0 0 0 rgba(214, 69, 69, 0.55);
+  animation: live-pulse 1.6s ease-out infinite;
+}
+.live-banner-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.live-banner-tag {
+  margin: 0 0 2px;
+  color: #b5372f;
+  font-family: var(--font-ui);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.live-banner-heading {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.32rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+.live-banner-sub {
+  margin: 2px 0 0;
+  color: var(--body);
+  font-size: 0.98rem;
+}
+.live-banner-btn {
+  flex: 0 0 auto;
+}
+@keyframes live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(214, 69, 69, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(214, 69, 69, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(214, 69, 69, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
+  }
+}
+@media (max-width: 680px) {
+  .live-banner-inner {
+    flex-wrap: wrap;
+    gap: 10px 14px;
+  }
+  .live-banner-btn {
+    width: 100%;
+  }
 }
