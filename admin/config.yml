@@ -70,7 +70,7 @@ collections:
             hint: "Use the + button to add a class. Fill in the date, price, and what to bring."
             fields:
               - { name: title, label: "Class name", widget: string, hint: "e.g. Paper Bag Junk Journal." }
-              - { name: date, label: "Date", widget: date, format: "YYYY-MM-DD", hint: "Pick the date of the class." }
+              - { name: date, label: "Date", widget: datetime, type: date, format: "YYYY-MM-DD", time_format: false, hint: "Pick the date of the class." }
               - { name: time, label: "Time", widget: string, required: false, hint: "e.g. 2:00 PM ET." }
               - { name: price, label: "Price", widget: string, required: false, hint: "e.g. $50." }
               - { name: location, label: "Where", widget: string, required: false, hint: "e.g. Live on TikTok @stephanie.davis015." }
