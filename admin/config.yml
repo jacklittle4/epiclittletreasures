@@ -9,6 +9,7 @@ public_folder: "assets"
 site_url: https://www.epiclittletreasures.com
 display_url: https://www.epiclittletreasures.com
 logo_url: https://www.epiclittletreasures.com/assets/logo-moth.svg
+app_title: "Epic Little Treasures"
 
 editor:
   preview: false
