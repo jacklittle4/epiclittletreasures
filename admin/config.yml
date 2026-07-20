@@ -1,10 +1,11 @@
 backend:
-  name: git-gateway
-  branch: photo-forward-rehaul
+  name: github
+  repo: jacklittle4/epiclittletreasures
+  branch: main
+  base_url: https://sveltia-cms-auth.aphelionsystems-dev.workers.dev
 
 media_folder: "assets"
 public_folder: "assets"
-publish_mode: simple
 site_url: https://www.epiclittletreasures.com
 display_url: https://www.epiclittletreasures.com
 logo_url: https://www.epiclittletreasures.com/assets/logo-moth.svg

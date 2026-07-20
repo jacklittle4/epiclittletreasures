@@ -7,9 +7,8 @@
     <title>Epic Little Treasures — Editor</title>
   </head>
   <body>
-    <!-- Login (Netlify Identity) -->
-    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-    <!-- The editor itself (Decap CMS) -->
-    <script src="https://unpkg.com/decap-cms@^3.6.0/dist/decap-cms.js"></script>
+    <!-- Sveltia CMS (modern drop-in successor to Decap; reads admin/config.yml). -->
+    <!-- Pinned to a fixed version so a surprise beta release can't break the editor. -->
+    <script src="https://unpkg.com/@sveltia/cms@0.172.1/dist/sveltia-cms.js"></script>
   </body>
 </html>
