@@ -277,6 +277,8 @@ function productForm(p) {
         </select></label>
       <label class="field"><span>Short description</span>
         <textarea data-f="summary" placeholder="A sentence or two shown under the name.">${esc(p.summary || "")}</textarea></label>
+      <label class="field"><span>Buy link — card / Klarna / Affirm <span class="hint">(optional, from Stripe)</span></span>
+        <input type="text" data-f="payLink" value="${attr(p.payLink || "")}" placeholder="https://buy.stripe.com/..." /></label>
       <div class="form-actions">
         <button class="btn btn-primary" data-action="save-product">Save product</button>
         <button class="btn btn-ghost" data-action="cancel-edit">Cancel</button>
@@ -370,7 +372,7 @@ async function saveProduct() {
   const { kind, index } = state.editing;
   const list = state.files.products.data.products;
   const base = index === null ? {} : { ...list[index] };
-  const updated = { ...base, name: vals.name, image: vals.image || "", price: vals.price, status: vals.status, category: vals.category, summary: vals.summary };
+  const updated = { ...base, name: vals.name, image: vals.image || "", price: vals.price, status: vals.status, category: vals.category, summary: vals.summary, payLink: vals.payLink || "" };
   if (!updated.id) updated.id = slugify(vals.name) || "item-" + Date.now();
   if (index === null) list.push(updated);
   else list[index] = updated;

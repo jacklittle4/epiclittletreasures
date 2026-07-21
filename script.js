@@ -209,9 +209,10 @@ const renderCheckout = (catalog) => {
           ? `
             <div class="payment-panel">
               <p class="eyebrow">Pay now</p>
-              <h3>Use Cash App or Venmo, then include the item name in the note.</h3>
+              <h3>${product.payLink ? "Pay by card, Klarna, or Affirm — or use Cash App / Venmo and add the item name in the note." : "Use Cash App or Venmo, then include the item name in the note."}</h3>
               <div class="payment-actions">
-                <a class="button button-primary" href="${shop.cashApp}" target="_blank" rel="noopener">Pay with Cash App</a>
+                ${product.payLink ? `<a class="button button-primary" href="${product.payLink}" target="_blank" rel="noopener">Pay with card, Klarna, or Affirm</a>` : ""}
+                <a class="button ${product.payLink ? "button-secondary" : "button-primary"}" href="${shop.cashApp}" target="_blank" rel="noopener">Pay with Cash App</a>
                 <a class="button button-secondary" href="${shop.venmo}" target="_blank" rel="noopener">Pay with Venmo</a>
               </div>
               <p class="checkout-note">${note}</p>
