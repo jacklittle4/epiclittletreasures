@@ -37,6 +37,14 @@ const productKey = (product) => product.id || slugify(product.name || "");
 const productInquiryUrl = (product) => `contact.html?item=${encodeURIComponent(productKey(product))}`;
 const productCheckoutUrl = (product) => `checkout.html?item=${encodeURIComponent(productKey(product))}`;
 const isFixedPrice = (price = "") => price.trim().startsWith("$");
+const isBundle = (product = {}) => String(product.category || "").toLowerCase() === "live bundles";
+// Strip dangerous URL schemes (javascript:/data:/vbscript:) from any link/image
+// value that comes out of products.json, while still allowing normal relative
+// paths ("assets/x.jpeg") and http(s)/mailto/tel links.
+const safeUrl = (url = "") => {
+  const value = String(url).replace(/[\x00-\x20\x7f]/g, "").trim();
+  return /^(javascript|data|vbscript):/i.test(value) ? "" : value;
+};
 const productLabel = (product) => `${product.name} - ${product.price}`;
 const bundlePullCount = (product = {}) => {
   const match = String(product.name || "").match(/(\d+)\s*pulls?/i);
@@ -64,27 +72,28 @@ const productCard = (product, mode = "grid") => {
   const fixedPrice = isFixedPrice(product.price || "");
   const canBuyNow = status === "available" && fixedPrice;
   const availability = canBuyNow ? "Ready for buy now" : statusLabels[status] || "Ask first";
+  const alt = escapeHtml(product.alt || product.name || "");
   const gallery = Array.isArray(product.gallery) ? product.gallery : [];
-  const image = gallery[0] || product.image || "assets/logo-moth.svg";
+  const image = escapeHtml(safeUrl(gallery[0] || product.image || "") || "assets/logo-moth.svg");
   const galleryPreview = gallery.length > 1
-    ? `<div class="product-gallery" aria-label="More photos">${gallery.slice(1, 4).map((photo) => `<img src="${photo}" alt="${product.alt || product.name}" loading="lazy" />`).join("")}</div>`
+    ? `<div class="product-gallery" aria-label="More photos">${gallery.slice(1, 4).map((photo) => `<img src="${escapeHtml(safeUrl(photo))}" alt="${alt}" loading="lazy" />`).join("")}</div>`
     : "";
-  const detail = mode === "list" ? `<p class="product-detail">${product.details || ""}</p>${galleryPreview}` : "";
-  const priceTag = product.price ? `<span class="price-tag">${product.price}</span>` : "";
+  const detail = mode === "list" ? `<p class="product-detail">${escapeHtml(product.details || "")}</p>${galleryPreview}` : "";
+  const priceTag = product.price ? `<span class="price-tag">${escapeHtml(product.price)}</span>` : "";
 
   return `
-    <article class="product-card" id="${product.id}">
+    <article class="product-card" id="${escapeHtml(productKey(product))}">
       <a class="product-photo" href="${canBuyNow ? productCheckoutUrl(product) : productInquiryUrl(product)}">
-        <img src="${image}" alt="${product.alt || product.name}" loading="lazy" />
+        <img src="${image}" alt="${alt}" loading="lazy" />
         <span class="status-badge status-${status}">${statusLabels[status] || "Ask first"}</span>
         ${priceTag}
       </a>
       <div class="product-body">
         <div class="product-topline">
-          <span>${product.category || "Handmade"}</span>
+          <span>${escapeHtml(product.category || "Handmade")}</span>
         </div>
-        <h3>${product.name}</h3>
-        <p>${product.summary || ""}</p>
+        <h3>${escapeHtml(product.name || "")}</h3>
+        <p>${escapeHtml(product.summary || "")}</p>
         ${detail}
         <div class="product-meta-line">${availability}</div>
         <div class="buy-links">
@@ -139,7 +148,9 @@ const renderBundleTiers = (catalog) => {
       const canBuyNow = status === "available" && isFixedPrice(product.price || "");
       const href = canBuyNow ? productCheckoutUrl(product) : productInquiryUrl(product);
       const cta = canBuyNow ? "Buy now" : status === "sold-out" ? "Ask next batch" : "Ask about this";
-      return `<a class="bundle-tier" href="${href}" aria-label="${bundleTierLabel(product)} bundle ${product.price || ""} - ${cta}"><span>${bundleTierLabel(product)}</span><strong>${product.price || ""}</strong><span class="bundle-tier-cta">${cta}</span></a>`;
+      const label = escapeHtml(bundleTierLabel(product));
+      const price = escapeHtml(product.price || "");
+      return `<a class="bundle-tier" href="${href}" aria-label="${label} bundle ${price} - ${cta}"><span>${label}</span><strong>${price}</strong><span class="bundle-tier-cta">${cta}</span></a>`;
     })
     .join("");
   const note = bundleTiersTarget.querySelector(".bundle-note");
@@ -193,51 +204,120 @@ const renderCheckout = (catalog) => {
 
   const fixedPrice = isFixedPrice(product.price || "");
   const status = normalizeStatus(product);
-  const note = `Payment note: ${productLabel(product)}`;
+  const canPayNow = fixedPrice && status === "available";
+  // Bundles are hand-picked, so buyers answer 4 quick questions before the pay
+  // options unlock. Their answers also ride along in the follow-up email below.
+  const gateQuestions = canPayNow && isBundle(product);
+
+  const name = escapeHtml(product.name || "");
+  const category = escapeHtml(product.category || "Handmade");
+  const summary = escapeHtml(product.summary || "");
+  const priceText = escapeHtml(product.price || "Message for price");
+  const alt = escapeHtml(product.alt || product.name || "");
+  const image = escapeHtml(
+    safeUrl((Array.isArray(product.gallery) && product.gallery[0]) || product.image || "") || "assets/logo-moth.svg"
+  );
+  const payLink = safeUrl(product.payLink);
+  const cashApp = escapeHtml(safeUrl(shop.cashApp));
+  const venmo = escapeHtml(safeUrl(shop.venmo));
+  const noteText = escapeHtml(`Payment note: ${productLabel(product)}`);
+  const itemValue = escapeHtml(productLabel(product));
+
+  const payReminder = gateQuestions
+    ? `<p class="checkout-note">After you pay, please send your shipping details below so Stephanie can mail your bundle &mdash; your answers go with it.</p>`
+    : "";
+
+  const paymentPanel = canPayNow
+    ? `
+        <div class="payment-panel">
+          <p class="eyebrow">Pay now</p>
+          <h3>${payLink ? "Pay by card, Klarna, or Affirm — or use Cash App / Venmo and add the item name in the note." : "Use Cash App or Venmo, then include the item name in the note."}</h3>
+          <div class="payment-actions">
+            ${payLink ? `<a class="button button-primary" href="${escapeHtml(payLink)}" target="_blank" rel="noopener">Pay with card, Klarna, or Affirm</a>` : ""}
+            <a class="button ${payLink ? "button-secondary" : "button-primary"}" href="${cashApp}" target="_blank" rel="noopener">Pay with Cash App</a>
+            <a class="button button-secondary" href="${venmo}" target="_blank" rel="noopener">Pay with Venmo</a>
+          </div>
+          <p class="checkout-note">${noteText}</p>
+          ${payReminder}
+        </div>
+      `
+    : `
+        <div class="payment-panel">
+          <p class="eyebrow">${status === "sold-out" ? "Sold out" : "Custom price"}</p>
+          <h3>This item needs a quick message before payment.</h3>
+          <p>${status === "sold-out" ? "This piece may already be claimed, but a similar future batch or custom option may be possible." : "Custom pieces depend on color, size, materials, and timing, so the final total should be confirmed first."}</p>
+          <div class="payment-actions">
+            <a class="button button-primary" href="${productInquiryUrl(product)}">Start the request</a>
+          </div>
+        </div>
+      `;
+
+  const questionsCard = gateQuestions
+    ? `
+        <div class="contact-form bundle-questions" data-bundle-questions>
+          <div class="full-field bq-head">
+            <p class="eyebrow">One quick step</p>
+            <h3 class="form-title">Help Stephanie hand-pick your pulls</h3>
+            <p class="bundle-lock-note">Answer these four questions so your bundle is personalized &mdash; then the payment options unlock.</p>
+          </div>
+          <p class="bundle-q-error full-field" role="alert" hidden>Please answer all four questions to unlock payment.</p>
+          <label for="q-color">Favorite color
+            <input id="q-color" type="text" autocomplete="off" placeholder="Sage green, dusty peach, etc." required />
+          </label>
+          <label for="q-theme">Theme or vibe
+            <input id="q-theme" type="text" autocomplete="off" placeholder="Cottagecore, vintage botanical, dark academia..." required />
+          </label>
+          <label for="q-reader">Do you read?
+            <select id="q-reader" required>
+              <option value="">Choose one</option>
+              <option>Yes, I love books</option>
+              <option>Sometimes</option>
+              <option>Not really</option>
+            </select>
+          </label>
+          <label for="q-sarcasm">Are you sarcastic?
+            <select id="q-sarcasm" required>
+              <option value="">Choose one</option>
+              <option>Very sarcastic / snarky</option>
+              <option>A little</option>
+              <option>Not at all, keep it sweet</option>
+            </select>
+          </label>
+          <button type="button" class="button button-primary full-field" data-unlock-pay>Continue to payment</button>
+        </div>
+      `
+    : "";
+
+  const bundleFollowupFields = gateQuestions
+    ? `
+        <input type="hidden" name="blindbag_color" value="" />
+        <input type="hidden" name="blindbag_theme" value="" />
+        <input type="hidden" name="blindbag_reader" value="" />
+        <input type="hidden" name="blindbag_sarcasm" value="" />
+      `
+    : "";
 
   checkoutTarget.innerHTML = `
     <article class="checkout-card checkout-detail">
       <a class="text-link checkout-back" href="treasures.html">&larr; Keep shopping</a>
       <div class="checkout-product">
-        <img src="${(Array.isArray(product.gallery) && product.gallery[0]) || product.image || "assets/logo-moth.svg"}" alt="${product.alt || product.name}" />
+        <img src="${image}" alt="${alt}" />
         <div>
-          <p class="eyebrow">${product.category || "Handmade"}</p>
-          <h2>${product.name}</h2>
-          <p>${product.summary || ""}</p>
-          <strong class="checkout-price">${product.price || "Message for price"}</strong>
+          <p class="eyebrow">${category}</p>
+          <h2>${name}</h2>
+          <p>${summary}</p>
+          <strong class="checkout-price">${priceText}</strong>
         </div>
       </div>
-      ${
-        fixedPrice && status === "available"
-          ? `
-            <div class="payment-panel">
-              <p class="eyebrow">Pay now</p>
-              <h3>${product.payLink ? "Pay by card, Klarna, or Affirm — or use Cash App / Venmo and add the item name in the note." : "Use Cash App or Venmo, then include the item name in the note."}</h3>
-              <div class="payment-actions">
-                ${product.payLink ? `<a class="button button-primary" href="${product.payLink}" target="_blank" rel="noopener">Pay with card, Klarna, or Affirm</a>` : ""}
-                <a class="button ${product.payLink ? "button-secondary" : "button-primary"}" href="${shop.cashApp}" target="_blank" rel="noopener">Pay with Cash App</a>
-                <a class="button button-secondary" href="${shop.venmo}" target="_blank" rel="noopener">Pay with Venmo</a>
-              </div>
-              <p class="checkout-note">${note}</p>
-            </div>
-          `
-          : `
-            <div class="payment-panel">
-              <p class="eyebrow">${status === "sold-out" ? "Sold out" : "Custom price"}</p>
-              <h3>This item needs a quick message before payment.</h3>
-              <p>${status === "sold-out" ? "This piece may already be claimed, but a similar future batch or custom option may be possible." : "Custom pieces depend on color, size, materials, and timing, so the final total should be confirmed first."}</p>
-              <div class="payment-actions">
-                <a class="button button-primary" href="${productInquiryUrl(product)}">Start the request</a>
-              </div>
-            </div>
-          `
-      }
-      <form class="contact-form checkout-followup" action="https://formsubmit.co/${shop.email}" method="POST">
+      ${questionsCard}
+      ${gateQuestions ? `<div class="payment-locked" data-pay-panel hidden></div>` : paymentPanel}
+      <form class="contact-form checkout-followup" action="https://formsubmit.co/${escapeHtml(shop.email)}" method="POST">
         <input type="hidden" name="_subject" value="Epic Little Treasures checkout follow-up" />
         <input type="hidden" name="_template" value="table" />
         <input type="hidden" name="_captcha" value="false" />
         <input type="hidden" name="_next" value="https://www.epiclittletreasures.com/thank-you.html" />
-        <input type="hidden" name="item" value="${productLabel(product)}" />
+        <input type="hidden" name="item" value="${itemValue}" />
+        ${bundleFollowupFields}
         <h3 class="form-title">Send shipping or pickup details</h3>
         <div>
           <label for="checkout-name">Name</label>
@@ -267,6 +347,92 @@ const renderCheckout = (catalog) => {
       </form>
     </article>
   `;
+
+  if (gateQuestions) {
+    wireBundleGate(checkoutTarget, product, shop, paymentPanel);
+  }
+};
+
+/* Bundle checkout gate: require the 4 personalization answers before revealing
+   the pay options. The payment panel HTML is only injected into the DOM once the
+   answers are captured (so the pay links do not exist until the gate is passed).
+   Answers are copied into the follow-up form (guaranteed delivery with the
+   shipping address) and best-effort emailed up front. */
+const wireBundleGate = (root, product, shop, paymentPanelHtml) => {
+  const card = root.querySelector("[data-bundle-questions]");
+  const payPanel = root.querySelector("[data-pay-panel]");
+  const button = card && card.querySelector("[data-unlock-pay]");
+  const errorEl = card && card.querySelector(".bundle-q-error");
+  const followup = root.querySelector(".checkout-followup");
+  if (!card || !payPanel || !button) {
+    return;
+  }
+
+  const fields = [
+    ["#q-color", "blindbag_color"],
+    ["#q-theme", "blindbag_theme"],
+    ["#q-reader", "blindbag_reader"],
+    ["#q-sarcasm", "blindbag_sarcasm"],
+  ];
+
+  button.addEventListener("click", () => {
+    const answers = fields.map(([selector, name]) => ({
+      el: card.querySelector(selector),
+      name,
+      value: (card.querySelector(selector)?.value || "").trim(),
+    }));
+    const firstEmpty = answers.find((a) => !a.value);
+    if (firstEmpty) {
+      if (errorEl) {
+        errorEl.hidden = false;
+        errorEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      firstEmpty.el?.focus();
+      return;
+    }
+    if (errorEl) errorEl.hidden = true;
+
+    // Carry the answers into the follow-up form so they are delivered for sure
+    // alongside the shipping address (this is the guaranteed delivery path).
+    answers.forEach(({ name, value }) => {
+      const hidden = followup && followup.querySelector(`input[name="${name}"]`);
+      if (hidden) hidden.value = value;
+    });
+
+    // Reveal payment right away — never make the buyer wait on a network call.
+    // The pay links are injected only now, so they were never in the DOM before
+    // the questions were answered.
+    card.classList.add("is-done");
+    button.textContent = "Answers saved ✓";
+    card.querySelectorAll("input, select, button").forEach((el) => {
+      el.disabled = true;
+    });
+    payPanel.innerHTML = paymentPanelHtml || "";
+    payPanel.hidden = false;
+    payPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+    // Best-effort early heads-up to Stephanie, in the background with a short
+    // timeout. If it fails, the follow-up form above still carries the answers.
+    const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    if (controller) {
+      setTimeout(() => controller.abort(), 6000);
+    }
+    fetch(`https://formsubmit.co/ajax/${shop.email}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        _subject: `Bundle pull preferences — ${product.name}`,
+        item: productLabel(product),
+        favorite_color: answers[0].value,
+        theme: answers[1].value,
+        reads: answers[2].value,
+        sarcastic: answers[3].value,
+      }),
+      signal: controller ? controller.signal : undefined,
+    }).catch(() => {
+      /* offline, blocked, or timed out — follow-up form still carries answers */
+    });
+  });
 };
 
 const blindbagFields = document.querySelector("#blindbag-fields");
@@ -295,8 +461,8 @@ const populateContactItems = (catalog) => {
   const options = [
     `<option value="">Choose an item</option>`,
     ...products.map((product) => {
-      const label = productLabel(product);
-      return `<option value="${label}" data-product-id="${productKey(product)}" data-category="${product.category || ""}">${label}</option>`;
+      const label = escapeHtml(productLabel(product));
+      return `<option value="${label}" data-product-id="${escapeHtml(productKey(product))}" data-category="${escapeHtml(product.category || "")}">${label}</option>`;
     }),
     `<option value="Workshop or class">Workshop or class</option>`,
     `<option value="Not sure yet">Not sure yet</option>`,
@@ -341,10 +507,11 @@ const workshopCard = (workshop) => {
     : `<div class="workshop-date"><span class="wd-month">Soon</span></div>`;
   const meta = [workshop.price, workshop.time, workshop.location || workshop.format]
     .filter(Boolean)
-    .map((entry) => `<span>${entry}</span>`)
+    .map((entry) => `<span>${escapeHtml(entry)}</span>`)
     .join("");
-  const signup = workshop.signupUrl
-    ? `<a class="button button-primary" href="${workshop.signupUrl}">Save my spot</a>`
+  const signupUrl = safeUrl(workshop.signupUrl);
+  const signup = signupUrl
+    ? `<a class="button button-primary" href="${escapeHtml(signupUrl)}">Save my spot</a>`
     : "";
 
   return `
@@ -352,9 +519,9 @@ const workshopCard = (workshop) => {
       ${badge}
       <div class="workshop-body">
         <span class="workshop-tag">${status === "past" ? "Past session" : "Upcoming class"}</span>
-        <h3>${workshop.title || "Teaching session"}</h3>
+        <h3>${escapeHtml(workshop.title || "Teaching session")}</h3>
         <div class="workshop-meta">${meta}</div>
-        <p>${workshop.description || ""}</p>
+        <p>${escapeHtml(workshop.description || "")}</p>
         ${status === "past" ? "" : signup}
       </div>
     </article>
@@ -388,9 +555,9 @@ const renderLive = (data) => {
     liveTarget.innerHTML = "";
     return;
   }
-  const url = data.url || fallbackCatalog.shop.tiktok;
+  const url = escapeHtml(safeUrl(data.url) || fallbackCatalog.shop.tiktok);
   liveTarget.innerHTML = `
-    <a class="live-float-card" href="${escapeHtml(url)}" target="_blank" rel="noopener" aria-label="Stephanie is live on TikTok right now — watch">
+    <a class="live-float-card" href="${url}" target="_blank" rel="noopener" aria-label="Stephanie is live on TikTok right now — watch">
       <span class="live-dot" aria-hidden="true"></span>
       <span class="live-float-text">
         <span class="live-float-tag">Live now</span>
