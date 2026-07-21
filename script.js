@@ -158,7 +158,7 @@ const renderPromo = (catalog) => {
     promoTarget.hidden = true;
     return;
   }
-  promoTarget.innerHTML = `<span class="promo-tape" aria-hidden="true"></span><p class="promo-text">${escapeHtml(text)}</p>`;
+  promoTarget.innerHTML = `<div class="promo-float-card"><span class="promo-tape" aria-hidden="true"></span><p class="promo-text">${escapeHtml(text)}</p></div>`;
   promoTarget.hidden = false;
 };
 

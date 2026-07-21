@@ -345,9 +345,7 @@ p {
 }
 
 .welcome-section {
-  background:
-    linear-gradient(90deg, rgba(231, 237, 225, 0.62), transparent),
-    var(--ivory);
+  background: transparent;
 }
 
 .welcome-grid,
@@ -621,7 +619,7 @@ p {
 
 .how-buy-section,
 .review-section {
-  background: var(--cream);
+  background: transparent;
 }
 
 .trust-grid,
@@ -1521,7 +1519,7 @@ h2 {
 
 /* Epic Bundles pricing tiers (Shop) */
 .bundles-section {
-  background: var(--mustard-soft);
+  background: transparent;
 }
 
 .bundle-tiers {
@@ -1532,16 +1530,16 @@ h2 {
 
 .bundle-tiers .bundle-tier {
   display: grid;
-  gap: 8px;
+  gap: 4px;
   justify-items: center;
-  padding: 26px 18px;
+  padding: 20px 16px;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 14px;
   background: var(--cream);
-  box-shadow: var(--shadow);
+  box-shadow: 0 6px 18px rgba(95, 80, 60, 0.07);
   text-align: center;
   color: inherit;
-  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
 .bundle-tiers .bundle-tier:hover,
@@ -1559,20 +1557,24 @@ h2 {
 }
 
 .bundle-tiers .bundle-tier strong {
-  display: inline-flex;
-  padding: 8px 18px;
-  border-radius: 999px;
-  background: var(--sage-deep);
-  color: var(--cream);
-  font-size: 1.35rem;
+  color: var(--sage-deep);
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .bundle-tier-cta {
-  color: var(--rose);
-  font-size: 0.8rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+.bundle-tiers .bundle-tier:hover .bundle-tier-cta,
+.bundle-tiers .bundle-tier:focus-visible .bundle-tier-cta {
+  color: var(--sage-deep);
 }
 
 .bundle-note {
@@ -1809,9 +1811,12 @@ h2 {
 }
 
 .cta-band {
-  padding-block: 72px;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  padding-block: 52px;
+  background: transparent;
+}
+.cta-band .cta-layout {
+  padding: clamp(26px, 5vw, 44px);
+  border-radius: 22px;
   background: linear-gradient(120deg, var(--sage-soft), var(--peach-soft));
 }
 
@@ -2323,7 +2328,7 @@ h3 {
 
 /* "What's inside" / "What to expect" — pill list, a different rhythm from card rows */
 .bundle-includes-section {
-  background: var(--sage-soft);
+  background: transparent;
 }
 .includes-layout {
   display: grid;
@@ -2465,49 +2470,47 @@ h3 {
   text-underline-offset: 3px;
 }
 
-/* Homepage deal ribbon (v21) — editable from the CMS shop info */
-.promo-banner {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin: 0;
-  padding: 12px 44px;
-  border-bottom: 1px solid var(--line);
-  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.16) 0 8px, rgba(255, 255, 255, 0) 8px 16px),
-    linear-gradient(120deg, var(--sage-soft), var(--peach-soft));
-  text-align: center;
+/* Homepage deal — small floating card, bottom-left (mirrors the Live card) */
+.promo-float {
+  position: fixed;
+  left: 18px;
+  bottom: 22px;
+  z-index: 60;
+  max-width: 240px;
 }
-.promo-banner[hidden] {
+.promo-float[hidden] {
   display: none;
 }
-.promo-banner .promo-text {
+.promo-float-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 16px;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(95, 80, 60, 0.2);
+}
+.promo-float-card .promo-tape {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  background: url("assets/sprig.svg") center / contain no-repeat;
+  opacity: 0.9;
+}
+.promo-float-card .promo-text {
   margin: 0;
   color: var(--sage-deep);
   font-family: var(--font-script);
-  font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+  font-size: 1.15rem;
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.2;
 }
-.promo-banner .promo-tape {
-  position: absolute;
-  top: 50%;
-  left: 18px;
-  width: 34px;
-  height: 34px;
-  transform: translateY(-50%);
-  background: url("assets/sprig.svg") center / contain no-repeat;
-  opacity: 0.85;
-}
-@media (max-width: 600px) {
-  .promo-banner {
-    padding: 10px 30px;
-  }
-  .promo-banner .promo-tape {
-    left: 8px;
-    width: 26px;
-    height: 26px;
+@media (max-width: 640px) {
+  .promo-float {
+    left: 12px;
+    bottom: 78px;
+    max-width: 190px;
   }
 }
 
@@ -2590,6 +2593,11 @@ h3 {
     right: 12px;
     bottom: 78px; /* clear the mobile quick-action bar */
     max-width: 210px;
+  }
+  /* On phones there isn't room for both cards side by side — during a live,
+     the "watch" card wins and the deal card steps aside to avoid overlap. */
+  body:has(.live-float:not([hidden])) .promo-float {
+    display: none;
   }
 }
 
