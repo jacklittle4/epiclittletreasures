@@ -2,5 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /manager.html
 Disallow: /admin/
+Disallow: /manage/
 
 Sitemap: https://www.epiclittletreasures.com/sitemap.xml

@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Epic Little Treasures — Editor</title>
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Source+Sans+3:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --cream: #f7f1e6;
+        --cream-2: #f1e8d8;
+        --card: #fffdf9;
+        --ink: #3f362c;
+        --body: #5f5347;
+        --muted: #8a7d6c;
+        --plum: #9d4f6e;
+        --plum-deep: #834058;
+        --sage: #5f7050;
+        --line: rgba(95, 80, 60, 0.18);
+        --line-soft: rgba(95, 80, 60, 0.1);
+        --ok: #4f7a4a;
+        --shadow: 0 10px 30px rgba(95, 80, 60, 0.12);
+        --radius: 18px;
+        --font-ui: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+        --font-display: "Cormorant Garamond", Georgia, serif;
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--cream);
+        color: var(--ink);
+        font-family: var(--font-ui);
+        font-size: 17px;
+        line-height: 1.5;
+      }
+      img { max-width: 100%; display: block; }
+      button { font-family: inherit; cursor: pointer; }
+
+      /* Top bar */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 20px;
+        background: var(--cream-2);
+        border-bottom: 1px solid var(--line);
+      }
+      .topbar img { width: 34px; height: 34px; }
+      .topbar .title { font-family: var(--font-display); font-size: 1.45rem; font-weight: 700; }
+      .topbar .spacer { flex: 1; }
+      .link-btn {
+        border: none;
+        background: none;
+        color: var(--muted);
+        font-size: 0.95rem;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        padding: 6px;
+      }
+
+      .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 80px; }
+
+      /* Login */
+      .login {
+        min-height: 78vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 8px;
+        padding: 24px;
+      }
+      .login img { width: 84px; height: 84px; margin-bottom: 4px; }
+      .login h1 { font-family: var(--font-display); font-size: 2.1rem; margin: 0; }
+      .login p { color: var(--body); max-width: 30ch; margin: 4px 0 20px; }
+
+      /* Cards */
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      .card > h2 {
+        font-family: var(--font-display);
+        font-size: 1.6rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .card > .sub { color: var(--muted); margin: 0 0 16px; font-size: 0.98rem; }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        padding: 12px 22px;
+        font-size: 1rem;
+        font-weight: 700;
+        min-height: 46px;
+      }
+      .btn-primary { background: var(--plum); color: #fff; }
+      .btn-primary:hover { background: var(--plum-deep); }
+      .btn-outline { background: transparent; border-color: var(--plum); color: var(--plum-deep); }
+      .btn-outline:hover { background: rgba(157, 79, 110, 0.08); }
+      .btn-ghost { background: var(--cream-2); border-color: var(--line); color: var(--ink); }
+      .btn-ghost:hover { border-color: var(--muted); }
+      .btn-danger { background: transparent; border-color: rgba(160, 60, 60, 0.5); color: #a03c3c; }
+      .btn-block { width: 100%; }
+      .btn-sm { padding: 8px 16px; min-height: 38px; font-size: 0.92rem; }
+
+      /* Toggle switch */
+      .switch-row { display: flex; align-items: center; gap: 16px; }
+      .switch-row .switch-label { flex: 1; font-size: 1.15rem; font-weight: 600; }
+      .switch {
+        position: relative;
+        width: 64px;
+        height: 36px;
+        flex: 0 0 auto;
+      }
+      .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+      .switch .track {
+        position: absolute;
+        inset: 0;
+        background: #d8cdba;
+        border-radius: 999px;
+        transition: background 180ms ease;
+      }
+      .switch .track::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+        transition: transform 180ms ease;
+      }
+      .switch input:checked + .track { background: var(--plum); }
+      .switch input:checked + .track::after { transform: translateX(28px); }
+      .switch input:focus-visible + .track { outline: 3px solid rgba(157, 79, 110, 0.4); outline-offset: 2px; }
+
+      /* Fields */
+      label.field { display: block; margin: 14px 0 0; }
+      label.field > span { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.98rem; }
+      label.field > .hint { font-weight: 400; color: var(--muted); font-size: 0.86rem; }
+      input[type="text"], input[type="email"], input[type="tel"], textarea, select {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+        color: var(--ink);
+        font-family: inherit;
+        font-size: 1rem;
+      }
+      textarea { min-height: 84px; resize: vertical; }
+      input:focus, textarea:focus, select:focus { outline: none; border-color: var(--plum); box-shadow: 0 0 0 3px rgba(157, 79, 110, 0.18); }
+
+      /* Item list */
+      .item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px;
+        border: 1px solid var(--line-soft);
+        border-radius: 14px;
+        margin-bottom: 10px;
+        background: #fffefb;
+      }
+      .item .thumb {
+        width: 56px; height: 56px; flex: 0 0 auto;
+        border-radius: 10px; object-fit: cover; background: var(--cream-2);
+        display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 1.4rem;
+      }
+      .item .meta { flex: 1; min-width: 0; }
+      .item .meta .name { font-weight: 700; }
+      .item .meta .detail { color: var(--muted); font-size: 0.92rem; }
+      .pill { display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 2px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em; }
+      .pill.available { background: #e4efe0; color: var(--sage); }
+      .pill.sold-out { background: #f3ded9; color: #a24b3a; }
+      .pill.custom-order { background: #efe4ef; color: var(--plum-deep); }
+      .item .row-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+
+      /* Edit form panel */
+      .editform { border: 1px dashed var(--plum); border-radius: 14px; padding: 16px; margin-bottom: 14px; background: #fffdfa; }
+      .editform .photo-preview { width: 96px; height: 96px; border-radius: 12px; object-fit: cover; border: 1px solid var(--line); margin-top: 6px; background: var(--cream-2); }
+      .form-actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+      .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      @media (max-width: 520px) { .row-2 { grid-template-columns: 1fr; } }
+
+      /* Toast + saving */
+      #toast {
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        transform: translateX(-50%) translateY(20px);
+        background: var(--ink);
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 999px;
+        font-weight: 600;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 220ms ease, transform 220ms ease;
+        z-index: 50;
+        max-width: 90vw;
+        text-align: center;
+      }
+      #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+      #toast.err { background: #a03c3c; }
+      .saving { color: var(--muted); font-size: 0.9rem; margin-left: 8px; }
+      .empty { color: var(--muted); font-style: italic; padding: 8px 0; }
+      .banner-note { background: var(--cream-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; color: var(--body); font-size: 0.95rem; margin-bottom: 16px; }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <img src="/assets/logo-moth.svg" alt="" />
+      <span class="title">Epic Little Treasures</span>
+      <span class="spacer"></span>
+      <button class="link-btn" id="logout-btn" hidden>Log out</button>
+    </div>
+
+    <div id="login-view" class="wrap">
+      <div class="login">
+        <img src="/assets/logo-moth.svg" alt="" />
+        <h1>Your shop editor</h1>
+        <p>Sign in to update your products, classes, deal, and go-live banner.</p>
+        <button class="btn btn-primary" id="login-btn">Sign in with GitHub</button>
+        <p id="login-msg" style="color: var(--muted); min-height: 1.2em"></p>
+      </div>
+    </div>
+
+    <main id="editor-view" class="wrap" hidden></main>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <script src="app.js?v=1"></script>
+  </body>
+</html>
