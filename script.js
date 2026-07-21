@@ -46,6 +46,64 @@ const safeUrl = (url = "") => {
   return /^(javascript|data|vbscript):/i.test(value) ? "" : value;
 };
 const productLabel = (product) => `${product.name} - ${product.price}`;
+
+/* ---- Cart (browser-side, no account) ------------------------------------ */
+const CART_KEY = "elt-cart-v1";
+// Endpoint that creates the Stripe Checkout Session (Cloudflare Worker).
+const CHECKOUT_ENDPOINT = "/api/create-checkout";
+const priceToCents = (price = "") => {
+  const match = String(price).match(/(\d+(?:\.\d{1,2})?)/);
+  return match ? Math.round(parseFloat(match[1]) * 100) : 0;
+};
+const formatCents = (cents) => `$${(cents / 100).toFixed(2)}`;
+const getCart = () => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+    return Array.isArray(raw) ? raw.filter((e) => e && e.id && e.qty > 0) : [];
+  } catch {
+    return [];
+  }
+};
+const saveCart = (cart) => {
+  try {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  } catch {
+    /* private mode / storage full — cart just won't persist */
+  }
+  updateCartUi();
+};
+const cartCount = () => getCart().reduce((sum, e) => sum + e.qty, 0);
+const addToCart = (id, qty = 1) => {
+  const cart = getCart();
+  const existing = cart.find((e) => e.id === id);
+  if (existing) existing.qty += qty;
+  else cart.push({ id, qty });
+  saveCart(cart);
+};
+const setCartQty = (id, qty) => {
+  let cart = getCart();
+  if (qty <= 0) cart = cart.filter((e) => e.id !== id);
+  else {
+    const entry = cart.find((e) => e.id === id);
+    if (entry) entry.qty = qty;
+  }
+  saveCart(cart);
+};
+// Resolve stored cart entries against the catalog — unknown ids are dropped and
+// prices always come from the catalog, never from stored/client data.
+const cartLines = (catalog) => {
+  const products = Array.isArray(catalog.products) ? catalog.products : [];
+  return getCart()
+    .map((entry) => {
+      const product = products.find((p) => productKey(p) === entry.id);
+      if (!product) return null;
+      const unitCents = priceToCents(product.price);
+      return { id: entry.id, qty: entry.qty, product, unitCents, lineCents: unitCents * entry.qty };
+    })
+    .filter(Boolean);
+};
+const cartTotalCents = (catalog) => cartLines(catalog).reduce((sum, line) => sum + line.lineCents, 0);
+
 const bundlePullCount = (product = {}) => {
   const match = String(product.name || "").match(/(\d+)\s*pulls?/i);
   return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
@@ -146,11 +204,14 @@ const renderBundleTiers = (catalog) => {
     .map((product) => {
       const status = normalizeStatus(product);
       const canBuyNow = status === "available" && isFixedPrice(product.price || "");
-      const href = canBuyNow ? productCheckoutUrl(product) : productInquiryUrl(product);
-      const cta = canBuyNow ? "Buy now" : status === "sold-out" ? "Ask next batch" : "Ask about this";
       const label = escapeHtml(bundleTierLabel(product));
       const price = escapeHtml(product.price || "");
-      return `<a class="bundle-tier" href="${href}" aria-label="${label} bundle ${price} - ${cta}"><span>${label}</span><strong>${price}</strong><span class="bundle-tier-cta">${cta}</span></a>`;
+      if (canBuyNow) {
+        const id = escapeHtml(productKey(product));
+        return `<div class="bundle-tier bundle-tier-buy"><span>${label}</span><strong>${price}</strong><button type="button" class="bundle-tier-add" data-add-to-cart="${id}" aria-label="Add ${label} bundle (${price}) to cart">Add to cart</button></div>`;
+      }
+      const cta = status === "sold-out" ? "Ask next batch" : "Ask about this";
+      return `<a class="bundle-tier" href="${productInquiryUrl(product)}" aria-label="${label} bundle ${price} - ${cta}"><span>${label}</span><strong>${price}</strong><span class="bundle-tier-cta">${cta}</span></a>`;
     })
     .join("");
   const note = bundleTiersTarget.querySelector(".bundle-note");
@@ -588,13 +649,305 @@ const getWorkshops = async () => {
   }
 };
 
+/* ---- Cart UI: header button + slide-out drawer + cart page -------------- */
+let catalogCache = fallbackCatalog;
+
+const cartRowHtml = (line) => {
+  const p = line.product;
+  const img = escapeHtml(safeUrl((Array.isArray(p.gallery) && p.gallery[0]) || p.image || "") || "assets/logo-moth.svg");
+  const name = escapeHtml(p.name || "");
+  return `
+    <div class="cart-row" data-cart-row>
+      <img class="cart-row-img" src="${img}" alt="" />
+      <div class="cart-row-main">
+        <p class="cart-row-name">${name}</p>
+        <p class="cart-row-price">${formatCents(line.unitCents)} each</p>
+        <div class="cart-qty" role="group" aria-label="Quantity for ${name}">
+          <button type="button" class="cart-qty-btn" data-cart-dec="${escapeHtml(line.id)}" aria-label="Decrease quantity">&minus;</button>
+          <span class="cart-qty-num" aria-live="polite">${line.qty}</span>
+          <button type="button" class="cart-qty-btn" data-cart-inc="${escapeHtml(line.id)}" aria-label="Increase quantity">+</button>
+        </div>
+      </div>
+      <div class="cart-row-end">
+        <span class="cart-row-total">${formatCents(line.lineCents)}</span>
+        <button type="button" class="cart-row-remove" data-cart-remove="${escapeHtml(line.id)}" aria-label="Remove ${name}">Remove</button>
+      </div>
+    </div>`;
+};
+
+const renderCartDrawer = () => {
+  const body = document.querySelector("[data-cart-body]");
+  const foot = document.querySelector("[data-cart-foot]");
+  if (!body || !foot) return;
+  const lines = cartLines(catalogCache);
+  if (!lines.length) {
+    body.innerHTML = `<p class="cart-empty">Your cart is empty.</p>`;
+    foot.innerHTML = `<a class="button button-secondary" href="treasures.html" data-cart-close>Shop the bundles</a>`;
+    return;
+  }
+  body.innerHTML = lines.map(cartRowHtml).join("");
+  foot.innerHTML = `
+    <div class="cart-subtotal"><span>Subtotal</span><strong>${formatCents(cartTotalCents(catalogCache))}</strong></div>
+    <p class="cart-foot-note">Free shipping included &middot; card, Klarna &amp; Affirm at checkout</p>
+    <a class="button button-primary" href="cart.html">Checkout</a>
+    <button type="button" class="text-link cart-keep" data-cart-close>Keep shopping</button>`;
+};
+
+const updateCartUi = () => {
+  const count = cartCount();
+  document.querySelectorAll("[data-cart-badge]").forEach((badge) => {
+    badge.textContent = String(count);
+    badge.hidden = count === 0;
+  });
+  if (document.querySelector("[data-cart-drawer]")) renderCartDrawer();
+  if (document.querySelector("[data-cart-review]")) renderCartPage();
+};
+
+const openCart = () => {
+  const drawer = document.querySelector("[data-cart-drawer]");
+  const overlay = document.querySelector("[data-cart-overlay]");
+  if (!drawer || !overlay) return;
+  renderCartDrawer();
+  overlay.hidden = false;
+  drawer.hidden = false;
+  drawer.setAttribute("aria-hidden", "false");
+  document.body.classList.add("cart-open");
+  const close = drawer.querySelector("[data-cart-close]");
+  if (close && close.focus) close.focus();
+};
+
+const closeCart = () => {
+  const drawer = document.querySelector("[data-cart-drawer]");
+  const overlay = document.querySelector("[data-cart-overlay]");
+  if (drawer) {
+    drawer.hidden = true;
+    drawer.setAttribute("aria-hidden", "true");
+  }
+  if (overlay) overlay.hidden = true;
+  document.body.classList.remove("cart-open");
+};
+
+const initCartUi = () => {
+  const header = document.querySelector(".header-inner");
+  if (header && !header.querySelector(".cart-button")) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "cart-button";
+    button.setAttribute("data-cart-open", "");
+    button.setAttribute("aria-label", "Open cart");
+    button.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M6 8h12l-1 11H7L6 8Zm3 0V6a3 3 0 0 1 6 0v2"/></svg><span class="cart-badge" data-cart-badge hidden>0</span>`;
+    const toggle = header.querySelector(".nav-toggle");
+    header.insertBefore(button, toggle || null);
+  }
+
+  if (!document.querySelector("[data-cart-drawer]")) {
+    const wrap = document.createElement("div");
+    wrap.innerHTML = `
+      <div class="cart-overlay" data-cart-overlay hidden></div>
+      <aside class="cart-drawer" data-cart-drawer hidden aria-label="Your cart" aria-hidden="true">
+        <div class="cart-drawer-head">
+          <h2>Your cart</h2>
+          <button type="button" class="cart-close" data-cart-close aria-label="Close cart">&times;</button>
+        </div>
+        <div class="cart-drawer-body" data-cart-body></div>
+        <div class="cart-drawer-foot" data-cart-foot></div>
+      </aside>`;
+    while (wrap.firstElementChild) document.body.appendChild(wrap.firstElementChild);
+  }
+
+  document.addEventListener("click", (event) => {
+    const add = event.target.closest("[data-add-to-cart]");
+    if (add) {
+      addToCart(add.getAttribute("data-add-to-cart"));
+      openCart();
+      return;
+    }
+    if (event.target.closest("[data-cart-open]")) {
+      openCart();
+      return;
+    }
+    if (event.target.closest("[data-cart-close]") || event.target.matches("[data-cart-overlay]")) {
+      closeCart();
+      return;
+    }
+    const inc = event.target.closest("[data-cart-inc]");
+    if (inc) {
+      const id = inc.getAttribute("data-cart-inc");
+      const entry = getCart().find((e) => e.id === id);
+      setCartQty(id, (entry ? entry.qty : 0) + 1);
+      return;
+    }
+    const dec = event.target.closest("[data-cart-dec]");
+    if (dec) {
+      const id = dec.getAttribute("data-cart-dec");
+      const entry = getCart().find((e) => e.id === id);
+      setCartQty(id, (entry ? entry.qty : 0) - 1);
+      return;
+    }
+    const remove = event.target.closest("[data-cart-remove]");
+    if (remove) {
+      setCartQty(remove.getAttribute("data-cart-remove"), 0);
+      return;
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeCart();
+  });
+
+  updateCartUi();
+};
+
+/* ---- Cart checkout page (cart.html) ------------------------------------- */
+const renderCartPage = () => {
+  const target = document.querySelector("[data-cart-review]");
+  if (!target) return;
+  const shop = { ...fallbackCatalog.shop, ...(catalogCache.shop || {}) };
+  const lines = cartLines(catalogCache);
+
+  if (!lines.length) {
+    target.innerHTML = `
+      <article class="checkout-card">
+        <p class="eyebrow">Your cart is empty</p>
+        <h2>Add a bundle or two, then come back to check out.</h2>
+        <div class="payment-actions">
+          <a class="button button-primary" href="treasures.html">Shop the bundles</a>
+        </div>
+      </article>`;
+    return;
+  }
+
+  const totalCents = cartTotalCents(catalogCache);
+  const rows = lines
+    .map(
+      (line) =>
+        `<div class="cart-review-row"><span>${line.qty} &times; ${escapeHtml(line.product.name)}</span><span>${formatCents(line.lineCents)}</span></div>`
+    )
+    .join("");
+
+  target.innerHTML = `
+    <article class="checkout-card checkout-detail">
+      <a class="text-link checkout-back" href="treasures.html">&larr; Keep shopping</a>
+      <div class="cart-review">
+        <h2>Order summary</h2>
+        ${rows}
+        <div class="cart-review-row cart-review-total"><span>Total</span><strong>${formatCents(totalCents)}</strong></div>
+        <p class="cart-foot-note">Free shipping included on every bundle.</p>
+      </div>
+      <div class="contact-form bundle-questions" data-bundle-questions>
+        <div class="full-field bq-head">
+          <p class="eyebrow">One quick step</p>
+          <h3 class="form-title">Help Stephanie hand-pick your pulls</h3>
+          <p class="bundle-lock-note">Answer these four questions for this order &mdash; then payment unlocks.</p>
+        </div>
+        <p class="bundle-q-error full-field" role="alert" hidden>Please answer all four questions to unlock payment.</p>
+        <label for="q-color">Favorite color
+          <input id="q-color" type="text" autocomplete="off" placeholder="Sage green, dusty peach, etc." required />
+        </label>
+        <label for="q-theme">Theme or vibe
+          <input id="q-theme" type="text" autocomplete="off" placeholder="Cottagecore, vintage botanical, dark academia..." required />
+        </label>
+        <label for="q-reader">Do you read?
+          <select id="q-reader" required>
+            <option value="">Choose one</option>
+            <option>Yes, I love books</option>
+            <option>Sometimes</option>
+            <option>Not really</option>
+          </select>
+        </label>
+        <label for="q-sarcasm">Are you sarcastic?
+          <select id="q-sarcasm" required>
+            <option value="">Choose one</option>
+            <option>Very sarcastic / snarky</option>
+            <option>A little</option>
+            <option>Not at all, keep it sweet</option>
+          </select>
+        </label>
+        <button type="button" class="button button-primary full-field" data-cart-pay>Pay securely &mdash; card, Klarna, or Affirm</button>
+        <p class="cart-pay-status full-field" role="status" aria-live="polite"></p>
+      </div>
+      <div class="payment-panel">
+        <p class="eyebrow">Prefer Cash App or Venmo?</p>
+        <h3>Pay the total above, then add "bundle order" in the note.</h3>
+        <div class="payment-actions">
+          <a class="button button-secondary" href="${escapeHtml(safeUrl(shop.cashApp))}" target="_blank" rel="noopener">Pay with Cash App</a>
+          <a class="button button-secondary" href="${escapeHtml(safeUrl(shop.venmo))}" target="_blank" rel="noopener">Pay with Venmo</a>
+        </div>
+        <p class="checkout-note">If you pay by Cash App or Venmo, send your answers and shipping address through the <a class="text-link" href="contact.html">contact form</a>.</p>
+      </div>
+    </article>`;
+
+  wireCartPay(target, shop);
+};
+
+const wireCartPay = (root, shop) => {
+  const card = root.querySelector("[data-bundle-questions]");
+  const button = root.querySelector("[data-cart-pay]");
+  const errorEl = root.querySelector(".bundle-q-error");
+  const status = root.querySelector(".cart-pay-status");
+  if (!card || !button) return;
+
+  button.addEventListener("click", async () => {
+    const fields = ["#q-color", "#q-theme", "#q-reader", "#q-sarcasm"];
+    const values = fields.map((sel) => ({ el: card.querySelector(sel), value: (card.querySelector(sel)?.value || "").trim() }));
+    const firstEmpty = values.find((v) => !v.value);
+    if (firstEmpty) {
+      if (errorEl) {
+        errorEl.hidden = false;
+        errorEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      firstEmpty.el?.focus();
+      return;
+    }
+    if (errorEl) errorEl.hidden = true;
+
+    const items = getCart();
+    if (!items.length) {
+      if (status) status.textContent = "Your cart is empty.";
+      return;
+    }
+
+    button.disabled = true;
+    if (status) status.textContent = "Taking you to secure checkout…";
+
+    const answers = {
+      favorite_color: values[0].value,
+      theme: values[1].value,
+      reads: values[2].value,
+      sarcastic: values[3].value,
+    };
+
+    try {
+      const response = await fetch(CHECKOUT_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items, answers }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok && data && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      throw new Error((data && data.error) || "Checkout is not available yet.");
+    } catch (err) {
+      button.disabled = false;
+      if (status) {
+        status.textContent =
+          "Card checkout is being set up. For now, please use Cash App or Venmo below, or send your order through the contact form.";
+      }
+    }
+  });
+};
+
 getCatalog().then((catalog) => {
+  catalogCache = catalog;
   renderProducts(catalog);
   renderBundleTiers(catalog);
   renderPromo(catalog);
   renderCheckout(catalog);
   populateContactItems(catalog);
   toggleBlindBagFields();
+  initCartUi();
 });
 
 if (workshopTargets.length) {

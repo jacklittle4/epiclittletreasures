@@ -13,7 +13,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Dancing+Script:wght@600;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=28" />
+    <link rel="stylesheet" href="styles.css?v=29" />
   </head>
   <body>
     <main>
@@ -30,5 +30,26 @@
         </div>
       </section>
     </main>
+    <script>
+      // When Stripe sends a paid buyer back here, empty their cart and switch
+      // the copy to an order confirmation. (Contact-form visitors see the
+      // default "message sent" wording.)
+      (function () {
+        var params = new URLSearchParams(location.search);
+        if (params.get("order") !== "success") return;
+        try {
+          localStorage.removeItem("elt-cart-v1");
+        } catch (e) {}
+        var eyebrow = document.querySelector(".eyebrow");
+        var heading = document.querySelector("h1");
+        var lead = document.querySelector("main p");
+        if (eyebrow) eyebrow.textContent = "Order received";
+        if (heading) heading.textContent = "Thank you! Your order is in.";
+        if (lead) {
+          lead.textContent =
+            "Your payment went through and your bundle preferences came along with it. Stephanie will hand-pick your pulls and ship them out, and a receipt is on its way from Stripe.";
+        }
+      })();
+    </script>
   </body>
 </html>
