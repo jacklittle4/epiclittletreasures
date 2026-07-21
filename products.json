@@ -23,7 +23,7 @@
       "featured": true,
       "status": "available",
       "id": "junk-journal-bundle-10",
-      "image": "assets/1000021886.jpeg",
+      "image": "assets/logo-moth.svg",
       "category": "Live bundles",
       "payLink": "https://buy.stripe.com/5kQbJ2bc08oH4xt3Cu4Ja00"
     },
@@ -37,7 +37,7 @@
       "featured": true,
       "status": "available",
       "id": "junk-journal-bundle-15",
-      "image": "assets/1000021887.jpeg",
+      "image": "assets/logo-moth.svg",
       "category": "Live bundles",
       "payLink": "https://buy.stripe.com/7sY7sMa7W8oHbZVdd44Ja01"
     },
@@ -51,7 +51,7 @@
       "featured": true,
       "status": "available",
       "id": "junk-journal-bundle-20",
-      "image": "assets/1000021890.jpeg",
+      "image": "assets/logo-moth.svg",
       "category": "Live bundles",
       "payLink": "https://buy.stripe.com/cNi3cw7ZO6gz8NJ0qi4Ja02"
     },
@@ -65,7 +65,7 @@
       "featured": false,
       "status": "available",
       "id": "junk-journal-bundle-25",
-      "image": "assets/1000021886.jpeg",
+      "image": "assets/logo-moth.svg",
       "category": "Live bundles",
       "payLink": "https://buy.stripe.com/6oU7sM7ZOeN5fc7dd44Ja03"
     },
@@ -79,7 +79,7 @@
       "featured": false,
       "status": "custom-order",
       "id": "custom-journal",
-      "image": "assets/1000021890.jpeg",
+      "image": "assets/logo-moth.svg",
       "category": "Custom"
     }
   ]
