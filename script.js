@@ -65,7 +65,7 @@ const productCard = (product, mode = "grid") => {
   const canBuyNow = status === "available" && fixedPrice;
   const availability = canBuyNow ? "Ready for buy now" : statusLabels[status] || "Ask first";
   const gallery = Array.isArray(product.gallery) ? product.gallery : [];
-  const image = gallery[0] || product.image;
+  const image = gallery[0] || product.image || "assets/logo-moth.svg";
   const galleryPreview = gallery.length > 1
     ? `<div class="product-gallery" aria-label="More photos">${gallery.slice(1, 4).map((photo) => `<img src="${photo}" alt="${product.alt || product.name}" loading="lazy" />`).join("")}</div>`
     : "";
@@ -109,6 +109,8 @@ const renderProducts = (catalog) => {
     const limit = Number(target.dataset.limit || 0);
     const list = mode === "featured" || mode === "latest"
       ? products.filter((product) => normalizeStatus(product) === "available")
+      : mode === "nonbundle"
+      ? products.filter((product) => String(product.category || "").toLowerCase() !== "live bundles")
       : products;
     const rendered = (limit ? list.slice(0, limit) : list).map((product) => {
       return productCard(product, mode === "all" ? "list" : "grid");
@@ -195,8 +197,9 @@ const renderCheckout = (catalog) => {
 
   checkoutTarget.innerHTML = `
     <article class="checkout-card checkout-detail">
+      <a class="text-link checkout-back" href="treasures.html">&larr; Keep shopping</a>
       <div class="checkout-product">
-        <img src="${(Array.isArray(product.gallery) && product.gallery[0]) || product.image}" alt="${product.alt || product.name}" />
+        <img src="${(Array.isArray(product.gallery) && product.gallery[0]) || product.image || "assets/logo-moth.svg"}" alt="${product.alt || product.name}" />
         <div>
           <p class="eyebrow">${product.category || "Handmade"}</p>
           <h2>${product.name}</h2>
@@ -229,15 +232,6 @@ const renderCheckout = (catalog) => {
             </div>
           `
       }
-      <ol class="checkout-steps">
-        <li><strong>1. Pay the listed amount.</strong> Open Cash App or Venmo in a new tab.</li>
-        <li><strong>2. Add the product name.</strong> Put "${product.name}" in the payment note.</li>
-        <li><strong>3. Send shipping details.</strong> Use the contact page if the owner needs an address or follow-up details.</li>
-      </ol>
-      <p class="checkout-disclaimer">
-        Handmade and live-sale pieces can move quickly. If a one-of-a-kind item was already claimed,
-        Stephanie can follow up with a refund, swap, or custom option.
-      </p>
       <form class="contact-form checkout-followup" action="https://formsubmit.co/${shop.email}" method="POST">
         <input type="hidden" name="_subject" value="Epic Little Treasures checkout follow-up" />
         <input type="hidden" name="_template" value="table" />
