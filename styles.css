@@ -2511,64 +2511,70 @@ h3 {
   }
 }
 
-/* "Live now" banner (v21) — link-out only; TikTok LIVE can't be embedded */
-.live-banner {
-  background: linear-gradient(120deg, var(--peach-soft), var(--mustard-soft));
-  border-bottom: 1px solid var(--line);
+/* "Live now" floating side card — link-out only; TikTok LIVE can't be embedded */
+.live-float {
+  position: fixed;
+  right: 18px;
+  bottom: 22px;
+  z-index: 60;
+  max-width: 250px;
 }
-.live-banner[hidden] {
+.live-float[hidden] {
   display: none;
 }
-.live-banner-inner {
+.live-float-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding-block: 14px;
+  gap: 11px;
+  padding: 11px 18px 11px 14px;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 0 12px 28px rgba(95, 80, 60, 0.22);
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.live-float-card:hover,
+.live-float-card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(95, 80, 60, 0.3);
 }
 .live-dot {
   flex: 0 0 auto;
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   background: #d64545;
   box-shadow: 0 0 0 0 rgba(214, 69, 69, 0.55);
   animation: live-pulse 1.6s ease-out infinite;
 }
-.live-banner-copy {
-  flex: 1 1 auto;
+.live-float-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
   min-width: 0;
 }
-.live-banner-tag {
-  margin: 0 0 2px;
+.live-float-tag {
   color: #b5372f;
   font-family: var(--font-ui);
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 900;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-.live-banner-heading {
-  margin: 0;
+.live-float-sub {
   color: var(--ink);
-  font-family: var(--font-display);
-  font-size: 1.32rem;
   font-weight: 700;
-  line-height: 1.15;
-}
-.live-banner-sub {
-  margin: 2px 0 0;
-  color: var(--body);
   font-size: 0.98rem;
-}
-.live-banner-btn {
-  flex: 0 0 auto;
+  white-space: nowrap;
 }
 @keyframes live-pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(214, 69, 69, 0.5);
   }
   70% {
-    box-shadow: 0 0 0 12px rgba(214, 69, 69, 0);
+    box-shadow: 0 0 0 10px rgba(214, 69, 69, 0);
   }
   100% {
     box-shadow: 0 0 0 0 rgba(214, 69, 69, 0);
@@ -2579,12 +2585,10 @@ h3 {
     animation: none;
   }
 }
-@media (max-width: 680px) {
-  .live-banner-inner {
-    flex-wrap: wrap;
-    gap: 10px 14px;
-  }
-  .live-banner-btn {
-    width: 100%;
+@media (max-width: 640px) {
+  .live-float {
+    right: 12px;
+    bottom: 78px; /* clear the mobile quick-action bar */
+    max-width: 210px;
   }
 }

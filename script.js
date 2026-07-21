@@ -395,19 +395,14 @@ const renderLive = (data) => {
     return;
   }
   const url = data.url || fallbackCatalog.shop.tiktok;
-  const heading = escapeHtml(data.heading || "I'm live on TikTok right now!");
-  const subtext = escapeHtml(data.subtext || "");
-  const buttonLabel = escapeHtml(data.buttonLabel || "Watch the live");
   liveTarget.innerHTML = `
-    <div class="live-banner-inner page-shell">
+    <a class="live-float-card" href="${escapeHtml(url)}" target="_blank" rel="noopener" aria-label="Stephanie is live on TikTok right now — watch">
       <span class="live-dot" aria-hidden="true"></span>
-      <div class="live-banner-copy">
-        <p class="live-banner-tag">Live now</p>
-        <p class="live-banner-heading">${heading}</p>
-        ${subtext ? `<p class="live-banner-sub">${subtext}</p>` : ""}
-      </div>
-      <a class="button button-primary live-banner-btn" href="${escapeHtml(url)}" target="_blank" rel="noopener">${buttonLabel}</a>
-    </div>`;
+      <span class="live-float-text">
+        <span class="live-float-tag">Live now</span>
+        <span class="live-float-sub">Watch on TikTok</span>
+      </span>
+    </a>`;
   liveTarget.hidden = false;
 };
 
