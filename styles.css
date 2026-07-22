@@ -1873,6 +1873,34 @@ body.cart-open {
   font-weight: 700;
 }
 
+/* Order / message confirmation page (thank-you.html) */
+.confirm-card {
+  max-width: 640px;
+  margin-inline: auto;
+  justify-items: center;
+  text-align: center;
+  gap: 14px;
+}
+.confirm-mark {
+  width: 64px;
+  height: 64px;
+  opacity: 0.92;
+}
+.confirm-card h1 {
+  margin: 0;
+  max-width: none;
+  font-size: clamp(2.4rem, 5vw, 3.4rem);
+}
+.confirm-card p:not(.eyebrow) {
+  max-width: 520px;
+  margin: 0;
+  color: var(--body);
+}
+.confirm-actions {
+  justify-content: center;
+  margin-top: 6px;
+}
+
 .bundle-note {
   grid-column: 1 / -1;
   margin: 6px 0 0;

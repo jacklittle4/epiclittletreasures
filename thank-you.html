@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Thank you for contacting Epic Little Treasures." />
+    <meta name="description" content="Thank you for your Epic Little Treasures order." />
     <meta name="robots" content="noindex" />
     <title>Thank You | Epic Little Treasures</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
@@ -13,43 +13,104 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Dancing+Script:wght@600;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=29" />
+    <link rel="stylesheet" href="styles.css?v=30" />
   </head>
   <body>
+    <header class="site-header">
+      <div class="header-inner page-shell">
+        <a class="brand" href="index.html" aria-label="Epic Little Treasures home">
+          <img class="brand-mark" src="assets/logo-moth.svg" alt="" aria-hidden="true" width="46" height="46" />
+          <span class="brand-text">
+            <span class="brand-name">Epic Little Treasures</span>
+            <span class="brand-note">handmade by Stephanie Davis</span>
+          </span>
+        </a>
+        <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="primary-nav">
+          <span></span><span></span><span></span>
+        </button>
+        <nav class="site-nav" id="primary-nav" aria-label="Primary navigation">
+          <a href="index.html">Home</a>
+          <a href="treasures.html">Shop</a>
+          <a href="about.html">About</a>
+          <a href="faq.html">FAQ</a>
+          <a href="contact.html">Contact</a>
+          <a href="workshops.html">Workshops</a>
+          <a class="nav-button" href="checkout.html">Buy Now</a>
+        </nav>
+      </div>
+    </header>
+
     <main>
-      <section class="page-hero page-shell">
-        <p class="eyebrow">Message sent</p>
-        <h1>Thank you. Your note was sent.</h1>
-        <p>
-          If this was about a payment, shipping details, pickup, or a custom piece,
-          Stephanie can follow up using the contact details you provided.
-        </p>
-        <div class="hero-actions">
-          <a class="button button-primary" href="treasures.html">Back to shop</a>
-          <a class="button button-secondary" href="index.html">Home</a>
+      <section class="section">
+        <div class="page-shell">
+          <article class="checkout-card confirm-card">
+            <img class="confirm-mark" src="assets/logo-moth.svg" alt="" aria-hidden="true" width="64" height="64" />
+            <p class="eyebrow" id="ty-eyebrow">Message sent</p>
+            <h1 id="ty-heading">Thank you. Your note was sent.</h1>
+            <p id="ty-lead">
+              If this was about a payment, shipping details, pickup, or a custom piece,
+              Stephanie can follow up using the contact details you provided.
+            </p>
+            <div class="hero-actions confirm-actions">
+              <a class="button button-primary" href="treasures.html">Back to shop</a>
+              <a class="button button-secondary" href="index.html">Home</a>
+            </div>
+          </article>
         </div>
       </section>
     </main>
+
+    <footer class="site-footer">
+      <div class="footer-grid page-shell">
+        <div>
+          <a class="footer-brand" href="index.html">Epic Little Treasures</a>
+          <p>Vintage cottage handmade journals, dyed papers, textile packs, and keepsakes.</p>
+        </div>
+        <nav aria-label="Footer navigation">
+          <a href="treasures.html">Shop</a>
+          <a href="checkout.html">Buy Now</a>
+          <a href="about.html">About</a>
+          <a href="faq.html">FAQ</a>
+          <a href="contact.html">Contact</a>
+          <a href="workshops.html">Workshops</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+        </nav>
+        <div class="footer-contact">
+          <a href="https://www.tiktok.com/@stephanie.davis015">TikTok @stephanie.davis015</a>
+          <a href="https://www.facebook.com/share/1bYBP86bQM/">Facebook: Epic Little Treasures</a>
+          <a href="https://www.etsy.com/shop/epiclittletreasures1">Etsy: epiclittletreasures1</a>
+          <a href="mailto:xoxodragonfly@gmail.com">xoxodragonfly@gmail.com</a>
+          <a href="tel:+17173194692">(717) 319-4692</a>
+        </div>
+      </div>
+      <p class="copyright page-shell">&copy; 2026 Epic Little Treasures &middot; Site by <a href="https://www.aphelionsystems.dev" target="_blank" rel="noopener">Jack Little</a></p>
+    </footer>
+    <div class="mobile-cta-bar" aria-label="Quick actions">
+      <a href="treasures.html">Shop</a>
+      <a href="checkout.html">Buy Now</a>
+      <a href="contact.html">Contact</a>
+    </div>
+
     <script>
-      // When Stripe sends a paid buyer back here, empty their cart and switch
-      // the copy to an order confirmation. (Contact-form visitors see the
-      // default "message sent" wording.)
+      // When Stripe sends a paid buyer back here, empty their cart, switch the
+      // copy to an order confirmation, and tell the shop about the paid order.
+      // (Contact-form visitors keep the default "message sent" wording.)
       (function () {
         var params = new URLSearchParams(location.search);
         if (params.get("order") !== "success") return;
         try {
           localStorage.removeItem("elt-cart-v1");
         } catch (e) {}
-        var eyebrow = document.querySelector(".eyebrow");
-        var heading = document.querySelector("h1");
-        var lead = document.querySelector("main p");
+        var eyebrow = document.getElementById("ty-eyebrow");
+        var heading = document.getElementById("ty-heading");
+        var lead = document.getElementById("ty-lead");
         if (eyebrow) eyebrow.textContent = "Order received";
         if (heading) heading.textContent = "Thank you! Your order is in.";
         if (lead) {
           lead.textContent =
             "Your payment went through and your bundle preferences came along with it. Stephanie will hand-pick your pulls and ship them out, and a receipt is on its way from Stripe.";
         }
-        // Tell the shop about the paid order (fires once per order per browser).
         var sid = params.get("session_id");
         if (!sid) return;
         var key = "elt-notified-" + sid;
