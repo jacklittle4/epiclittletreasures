@@ -29,13 +29,6 @@ export default {
       if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
       return orderNotify(request, env);
     }
-    if (url.pathname === "/api/debug-email") {
-      const sent = await sendShopEmail(env, {
-        subject: "Worker debug email test (Epic Little Treasures)",
-        message: "Sent from the Cloudflare Worker via Web3Forms to test delivery.",
-      });
-      return json(sent);
-    }
     // Everything else is the static site.
     return env.ASSETS.fetch(request);
   },
