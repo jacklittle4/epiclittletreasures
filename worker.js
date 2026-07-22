@@ -29,6 +29,13 @@ export default {
       if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
       return orderNotify(request, env);
     }
+    if (url.pathname === "/api/debug-email") {
+      const sent = await sendShopEmail({
+        _subject: "Worker debug email test (Epic Little Treasures)",
+        message: "Sent from the Cloudflare Worker to test server-side delivery.",
+      });
+      return json(sent);
+    }
     // Everything else is the static site.
     return env.ASSETS.fetch(request);
   },
@@ -206,21 +213,34 @@ async function orderNotify(request, env) {
     stripe_reference: session.payment_intent || session.id,
   };
 
+  const sent = await sendShopEmail(fields);
+  return json({ ok: sent.ok, reason: sent.ok ? "sent" : "email-rejected", detail: sent.body }, 200);
+}
+
+// Sends an email to the shop via FormSubmit. Returns whether FormSubmit actually
+// accepted it (it replies 200 with {success:"false"} when it rejects, so we must
+// read the body, not just trust the HTTP status).
+async function sendShopEmail(fields) {
   try {
-    await fetch(`https://formsubmit.co/ajax/${SHOP_EMAIL}`, {
+    const r = await fetch(`https://formsubmit.co/ajax/${SHOP_EMAIL}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        // FormSubmit rejects requests with no browser origin ("won't work in
-        // pages browsed as HTML files"); a server request must supply these.
         Origin: ORIGIN,
         Referer: `${ORIGIN}/cart.html`,
       },
       body: JSON.stringify(fields),
     });
-  } catch {
-    return json({ ok: false, reason: "email-failed" }, 200);
+    const body = await r.text();
+    let ok = false;
+    try {
+      ok = JSON.parse(body).success === "true";
+    } catch {
+      /* non-JSON response = not accepted */
+    }
+    return { ok, status: r.status, body: body.slice(0, 300) };
+  } catch (e) {
+    return { ok: false, status: 0, body: String(e).slice(0, 300) };
   }
-  return json({ ok: true });
 }
