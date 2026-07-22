@@ -60,10 +60,12 @@ async function createCheckout(request, env) {
   const answers = payload.answers && typeof payload.answers === "object" ? payload.answers : {};
   if (!items.length) return json({ error: "Your cart is empty." }, 400);
 
-  // Authoritative catalog — prices always come from here.
+  // Authoritative catalog — prices always come from here. Read it through the
+  // ASSETS binding (not a public fetch) to avoid a self-subrequest to our own
+  // zone, which Cloudflare rejects.
   let catalog;
   try {
-    const res = await fetch(`${ORIGIN}/products.json`, { cf: { cacheTtl: 60 } });
+    const res = await env.ASSETS.fetch(new Request(`${ORIGIN}/products.json`));
     catalog = await res.json();
   } catch {
     return json({ error: "Could not load the catalog." }, 502);
