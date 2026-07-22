@@ -209,7 +209,14 @@ async function orderNotify(request, env) {
   try {
     await fetch(`https://formsubmit.co/ajax/${SHOP_EMAIL}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        // FormSubmit rejects requests with no browser origin ("won't work in
+        // pages browsed as HTML files"); a server request must supply these.
+        Origin: ORIGIN,
+        Referer: `${ORIGIN}/cart.html`,
+      },
       body: JSON.stringify(fields),
     });
   } catch {

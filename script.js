@@ -132,7 +132,7 @@ const productCard = (product, mode = "grid") => {
   const availability = canBuyNow ? "Ready for buy now" : statusLabels[status] || "Ask first";
   const alt = escapeHtml(product.alt || product.name || "");
   const gallery = Array.isArray(product.gallery) ? product.gallery : [];
-  const image = escapeHtml(safeUrl(gallery[0] || product.image || "") || "assets/logo-moth.svg");
+  const image = escapeHtml(safeUrl(gallery[0] || product.image || "") || "assets/logo-moth.png");
   const galleryPreview = gallery.length > 1
     ? `<div class="product-gallery" aria-label="More photos">${gallery.slice(1, 4).map((photo) => `<img src="${escapeHtml(safeUrl(photo))}" alt="${alt}" loading="lazy" />`).join("")}</div>`
     : "";
@@ -276,7 +276,7 @@ const renderCheckout = (catalog) => {
   const priceText = escapeHtml(product.price || "Message for price");
   const alt = escapeHtml(product.alt || product.name || "");
   const image = escapeHtml(
-    safeUrl((Array.isArray(product.gallery) && product.gallery[0]) || product.image || "") || "assets/logo-moth.svg"
+    safeUrl((Array.isArray(product.gallery) && product.gallery[0]) || product.image || "") || "assets/logo-moth.png"
   );
   const payLink = safeUrl(product.payLink);
   const cashApp = escapeHtml(safeUrl(shop.cashApp));
@@ -654,7 +654,7 @@ let catalogCache = fallbackCatalog;
 
 const cartRowHtml = (line) => {
   const p = line.product;
-  const img = escapeHtml(safeUrl((Array.isArray(p.gallery) && p.gallery[0]) || p.image || "") || "assets/logo-moth.svg");
+  const img = escapeHtml(safeUrl((Array.isArray(p.gallery) && p.gallery[0]) || p.image || "") || "assets/logo-moth.png");
   const name = escapeHtml(p.name || "");
   return `
     <div class="cart-row" data-cart-row>
