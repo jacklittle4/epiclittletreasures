@@ -16,6 +16,7 @@
 
 const ORIGIN = "https://www.epiclittletreasures.com";
 const MAX_QTY_PER_ITEM = 20;
+const SHOP_EMAIL = "xoxodragonfly@gmail.com";
 
 export default {
   async fetch(request, env) {
@@ -23,6 +24,10 @@ export default {
     if (url.pathname === "/api/create-checkout") {
       if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
       return createCheckout(request, env);
+    }
+    if (url.pathname === "/api/order-notify") {
+      if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+      return orderNotify(request, env);
     }
     // Everything else is the static site.
     return env.ASSETS.fetch(request);
@@ -87,7 +92,7 @@ async function createCheckout(request, env) {
 
   const form = new URLSearchParams();
   form.set("mode", "payment");
-  form.set("success_url", `${ORIGIN}/thank-you.html?order=success`);
+  form.set("success_url", `${ORIGIN}/thank-you.html?order=success&session_id={CHECKOUT_SESSION_ID}`);
   form.set("cancel_url", `${ORIGIN}/cart.html`);
   form.set("shipping_address_collection[allowed_countries][0]", "US");
   form.set("phone_number_collection[enabled]", "true");
@@ -100,6 +105,7 @@ async function createCheckout(request, env) {
     form.set(`line_items[${i}][quantity]`, String(li.qty));
   });
   const meta = {
+    order_items: lineItems.map((li) => `${li.qty}x ${li.name}`).join(", "),
     favorite_color: answers.favorite_color,
     theme: answers.theme,
     reads: answers.reads,
@@ -128,4 +134,86 @@ async function createCheckout(request, env) {
   }
 
   return json({ url: session.url });
+}
+
+const formatAddress = (a) => {
+  if (!a) return "";
+  return [a.line1, a.line2, [a.city, a.state, a.postal_code].filter(Boolean).join(", "), a.country]
+    .filter(Boolean)
+    .join("\n");
+};
+
+/**
+ * Called by the thank-you page after Stripe redirects back. Looks the session
+ * up on Stripe, and ONLY if it is genuinely paid, emails Stephanie the order
+ * (items, the 4 answers, and the shipping address). No signature needed: an
+ * unpaid or unknown session id produces no email, and a valid paid id only ever
+ * re-sends a real order.
+ */
+async function orderNotify(request, env) {
+  if (!env.STRIPE_SECRET_KEY) return json({ ok: false }, 200);
+
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    return json({ error: "Bad request." }, 400);
+  }
+  const sessionId = String((payload && payload.session_id) || "");
+  if (!/^cs_[A-Za-z0-9_]+$/.test(sessionId)) return json({ error: "Bad session." }, 400);
+
+  let session;
+  try {
+    const r = await fetch(
+      `https://api.stripe.com/v1/checkout/sessions/${sessionId}?expand[]=line_items`,
+      { headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` } }
+    );
+    session = await r.json();
+    if (!r.ok) return json({ ok: false }, 200);
+  } catch {
+    return json({ ok: false }, 200);
+  }
+
+  if (session.payment_status !== "paid") return json({ ok: false, reason: "unpaid" }, 200);
+
+  const md = session.metadata || {};
+  const cust = session.customer_details || {};
+  const ship =
+    session.shipping_details ||
+    (session.collected_information && session.collected_information.shipping_details) ||
+    {};
+  const items =
+    session.line_items && session.line_items.data
+      ? session.line_items.data.map((li) => `${li.quantity}x ${li.description}`).join(", ")
+      : md.order_items || "";
+  const total = typeof session.amount_total === "number" ? `$${(session.amount_total / 100).toFixed(2)}` : "";
+
+  const fields = {
+    _subject: `New paid order${total ? " — " + total : ""} (Epic Little Treasures)`,
+    _template: "table",
+    _captcha: "false",
+    order_total: total,
+    items,
+    favorite_color: md.favorite_color || "",
+    theme: md.theme || "",
+    do_you_read: md.reads || "",
+    sarcastic: md.sarcastic || "",
+    customer_name: cust.name || ship.name || "",
+    customer_email: cust.email || "",
+    customer_phone: cust.phone || "",
+    ship_to: ship.name || "",
+    shipping_address: formatAddress(ship.address),
+    stripe_reference: session.payment_intent || session.id,
+  };
+
+  try {
+    await fetch(`https://formsubmit.co/ajax/${SHOP_EMAIL}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(fields),
+    });
+  } catch {
+    return json({ ok: false, reason: "email-failed" }, 200);
+  }
+  return json({ ok: true });
 }

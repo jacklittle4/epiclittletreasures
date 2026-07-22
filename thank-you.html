@@ -49,6 +49,23 @@
           lead.textContent =
             "Your payment went through and your bundle preferences came along with it. Stephanie will hand-pick your pulls and ship them out, and a receipt is on its way from Stripe.";
         }
+        // Tell the shop about the paid order (fires once per order per browser).
+        var sid = params.get("session_id");
+        if (!sid) return;
+        var key = "elt-notified-" + sid;
+        var seen = null;
+        try {
+          seen = localStorage.getItem(key);
+        } catch (e) {}
+        if (seen) return;
+        try {
+          localStorage.setItem(key, "1");
+        } catch (e) {}
+        fetch("/api/order-notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: sid }),
+        }).catch(function () {});
       })();
     </script>
   </body>
