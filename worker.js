@@ -30,9 +30,9 @@ export default {
       return orderNotify(request, env);
     }
     if (url.pathname === "/api/debug-email") {
-      const sent = await sendShopEmail({
-        _subject: "Worker debug email test (Epic Little Treasures)",
-        message: "Sent from the Cloudflare Worker to test server-side delivery.",
+      const sent = await sendShopEmail(env, {
+        subject: "Worker debug email test (Epic Little Treasures)",
+        message: "Sent from the Cloudflare Worker via Web3Forms to test delivery.",
       });
       return json(sent);
     }
@@ -196,9 +196,7 @@ async function orderNotify(request, env) {
   const total = typeof session.amount_total === "number" ? `$${(session.amount_total / 100).toFixed(2)}` : "";
 
   const fields = {
-    _subject: `New paid order${total ? " — " + total : ""} (Epic Little Treasures)`,
-    _template: "table",
-    _captcha: "false",
+    subject: `New paid order${total ? " — " + total : ""} (Epic Little Treasures)`,
     order_total: total,
     items,
     favorite_color: md.favorite_color || "",
@@ -213,29 +211,26 @@ async function orderNotify(request, env) {
     stripe_reference: session.payment_intent || session.id,
   };
 
-  const sent = await sendShopEmail(fields);
+  const sent = await sendShopEmail(env, fields);
   return json({ ok: sent.ok, reason: sent.ok ? "sent" : "email-rejected", detail: sent.body }, 200);
 }
 
-// Sends an email to the shop via FormSubmit. Returns whether FormSubmit actually
-// accepted it (it replies 200 with {success:"false"} when it rejects, so we must
-// read the body, not just trust the HTTP status).
-async function sendShopEmail(fields) {
+// Sends an email to the shop via Web3Forms (server-friendly: uses an access key,
+// no browser-origin requirement, reliable at shop volume). Reads the response
+// body since a rejected send still returns HTTP 200 with success:false.
+async function sendShopEmail(env, fields) {
+  if (!env.WEB3FORMS_KEY) return { ok: false, status: 0, body: "WEB3FORMS_KEY not set" };
   try {
-    const r = await fetch(`https://formsubmit.co/ajax/${SHOP_EMAIL}`, {
+    const r = await fetch("https://api.web3forms.com/submit", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        Origin: ORIGIN,
-        Referer: `${ORIGIN}/cart.html`,
-      },
-      body: JSON.stringify(fields),
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ access_key: env.WEB3FORMS_KEY, from_name: "Epic Little Treasures", ...fields }),
     });
     const body = await r.text();
     let ok = false;
     try {
-      ok = JSON.parse(body).success === "true";
+      const s = JSON.parse(body).success;
+      ok = s === true || s === "true";
     } catch {
       /* non-JSON response = not accepted */
     }
