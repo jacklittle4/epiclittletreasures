@@ -70,6 +70,19 @@
       "payLink": "https://buy.stripe.com/6oU7sM7ZOeN5fc7dd44Ja03"
     },
     {
+      "details": "Our biggest bundle yet — 20 hand-picked envelopes stuffed with vintage papers, ephemera, tags, trims, and little surprises.\n\nPlease let me know if you are a reader, a snarky person, fav primary color\n",
+      "summary": "The EPIC EPIC bundle — 20 envelopes packed with vintage papers and surprises. Price includes shipping.",
+      "price": "$79.99",
+      "alt": "Epic Little Treasures logo",
+      "available": true,
+      "name": "EPIC EPIC BUNDLE",
+      "featured": false,
+      "status": "available",
+      "id": "epic-epic-bundle",
+      "image": "assets/logo-moth.png",
+      "category": "Live bundles"
+    },
+    {
       "details": "Send color ideas, size, budget comfort, deadline, and whether it is for a gift, and Stephanie will make it for you.",
       "summary": "A custom handmade journal built around your colors, theme, occasion, or style.",
       "price": "From $49.99",
