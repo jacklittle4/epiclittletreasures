@@ -5,3 +5,5 @@ compatibility_date = "2026-07-01"
 [assets]
 directory = "./"
 binding = "ASSETS"
+# Unknown URLs get the friendly 404.html page (with a real 404 status).
+not_found_handling = "404-page"

@@ -57,6 +57,8 @@ body {
 img {
   display: block;
   max-width: 100%;
+  /* width/height attributes reserve space while loading; CSS sizing still wins */
+  height: auto;
 }
 
 a {

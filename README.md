@@ -1,38 +1,38 @@
 # Epic Little Treasures
 
-Static storefront-style website for Epic Little Treasures.
+Storefront for Stephanie Davis's junk-journal bundles — https://www.epiclittletreasures.com
+
+## How it runs
+
+- **Hosting:** Cloudflare Workers static assets. Every push to `main` deploys automatically.
+  `worker.js` serves the API routes below plus short links (`/shop`, `/bundles`, `/classes`);
+  everything else is a static file. `.assetsignore` keeps repo-only files (worker, docs) unpublished.
+- **Catalog:** `products.json` (bundles + other items), `workshops.json` (classes), `live.json` (the TikTok “I'm live” banner).
+- **Checkout:** the cart (`cart.html`) posts to `/api/create-checkout`, which builds a Stripe Checkout session.
+  Prices always come from `products.json` on the server, and only available items in the “Live bundles” category can be bought online.
+  After payment, `/api/order-notify` emails the order through Web3Forms.
+- **Design:** tokens at the top of `styles.css`; fonts Cormorant Garamond, EB Garamond, Dancing Script, Source Sans 3.
+  Logo `assets/moth.png`; photos are compressed `.webp`.
+
+## Shop editor (`/manage`)
+
+A phone-friendly page where Stephanie changes prices, marks bundles sold out, adds bundles/classes/photos, and flips the Live banner.
+She signs in with a passcode; the Worker commits her change to this repo, and the site redeploys about a minute later.
+“Sign in with GitHub” is a backup that commits straight from the browser.
+
+## Cloudflare secrets (Settings → Variables and Secrets)
+
+| Name | What |
+| --- | --- |
+| `STRIPE_SECRET_KEY` | Stripe restricted key (Checkout Sessions write) |
+| `WEB3FORMS_KEY` | Order-email access key |
+| `ADMIN_PASSCODE` | Stephanie's editor passcode (a few words; case and spaces don't matter). Changing it signs every device out. |
+| `GITHUB_TOKEN` | Fine-grained token, **this repo only**, Contents: read and write — lets the editor save |
 
 ## Preview locally
 
-From the repository root:
-
-```powershell
-python -m http.server 4173 --bind 127.0.0.1
+```bash
+python3 -m http.server 8788
 ```
 
-Open:
-
-```text
-http://127.0.0.1:4173/
-```
-
-## Notes
-
-- Product photos are generated placeholder assets for the site build and can be replaced with real shop photos later.
-- The contact form posts to FormSubmit using `xoxodragonfly@gmail.com`.
-- First FormSubmit use may require confirmation from the email owner before messages deliver.
-- Products can be paid for through the static checkout page using Cash App or Venmo links, with the contact form available for questions and custom work.
-- Product data lives in `products.json`; workshop/class data lives in `workshops.json`.
-- Owner tools live at `manager.html` (not linked anywhere on the public site, `noindex`, and disallowed in `robots.txt`). It edits products and workshops in the browser, then exports updated `products.json` / `workshops.json` to download and commit. It is client-side only — it cannot change the live site until the downloaded file is committed, and it holds no credentials. To keep it fully private, move `manager.html` + `manager.js` out of this repo.
-- Design system (vintage cottage): tokens live at the top of `styles.css` (sage / mustard / cream / peach / lavender on a deep-sepia ink). Fonts: Cormorant Garamond (display), EB Garamond (body), Dancing Script (script accents). Logo + motifs: `assets/logo-moth.svg`, `assets/sprig.svg` — swap in the real scanned moth from the business card when ready.
-- TikTok links point to `https://www.tiktok.com/@stephanie.davis015`.
-
-## Launch checklist
-
-- Update `products.json` for names, prices, `status` (`available`, `sold-out`, or `custom-order`), photos, alt text, and featured items.
-- Replace generated images in `assets/` with real product photos when available.
-- Confirm Cash App and Venmo links in `products.json`.
-- Submit one test contact form and one checkout follow-up form so FormSubmit is activated.
-- Review `privacy.html`, `terms.html`, `sitemap.xml`, and `robots.txt` before launch.
-- If a real custom domain is purchased later, update canonical links, sitemap URLs, FormSubmit `_next` URLs, and GitHub Pages settings.
-- Analytics are not installed yet. Add a real Google Analytics, Plausible, or Cloudflare Web Analytics ID only after the owner chooses one.
+Then open http://localhost:8788/. The `/api/*` routes only run on Cloudflare.

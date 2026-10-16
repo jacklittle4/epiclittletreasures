@@ -1,24 +1,27 @@
-/* Epic Little Treasures — bespoke, simple editor.
-   Logs in with GitHub (reusing the sveltia-cms-auth worker) and saves changes
-   straight to the repo via the GitHub API. Site redeploys automatically. */
+/* Epic Little Treasures — shop editor (/manage).
+   Stephanie signs in with a passcode; the site's Worker saves each change to
+   GitHub and the website redeploys about a minute later. "Sign in with GitHub"
+   stays as a backup (it talks to the GitHub API directly). Edits collect in a
+   working copy and only go live when she taps "Save changes" — except the
+   Live switch, which saves the moment it's flipped. */
 
-const WORKER = "https://sveltia-cms-auth.aphelionsystems-dev.workers.dev";
 const REPO = "jacklittle4/epiclittletreasures";
 const BRANCH = "main";
+const OAUTH_WORKER = "https://sveltia-cms-auth.aphelionsystems-dev.workers.dev";
 const TIKTOK_LIVE = "https://www.tiktok.com/@stephanie.davis015/live";
+const DEFAULT_CLASS_PLACE = "Live on TikTok @stephanie.davis015";
+const PATHS = { products: "products.json", workshops: "workshops.json", live: "live.json" };
+const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+const STATUS_LABEL = { available: "Available", "sold-out": "Sold out", "custom-order": "Made to order" };
 
-const state = {
-  token: localStorage.getItem("elt_gh_token") || null,
-  files: { products: null, workshops: null, live: null },
-  editing: null, // { kind: 'product'|'class', index: number|null }
-};
-
-/* ---------- tiny helpers ---------- */
+/* ---------- small helpers ---------- */
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (v = "") =>
   String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const attr = (v = "") => esc(v);
+const clone = (v) => JSON.parse(JSON.stringify(v));
 const slugify = (v = "") => String(v).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+const isBundle = (p) => String(p.category || "").toLowerCase() === "live bundles";
+const statusOf = (p) => p.status || (p.available === false ? "sold-out" : "available");
 
 let toastTimer;
 function toast(msg, isError) {
@@ -26,469 +29,760 @@ function toast(msg, isError) {
   t.textContent = msg;
   t.className = "show" + (isError ? " err" : "");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => (t.className = ""), isError ? 5000 : 2800);
+  toastTimer = setTimeout(() => (t.className = ""), isError ? 6000 : 3200);
 }
 
-/* ---------- auth ---------- */
-function setToken(tok) {
-  state.token = tok;
-  localStorage.setItem("elt_gh_token", tok);
+// "44.99", "$44.99", "44" -> "$44.99". Anything else ("4x", "44.9.9", "") -> null.
+function normalizePrice(raw) {
+  const m = String(raw).replace(/[,\s]/g, "").match(/^\$?(\d{1,4}(?:\.\d{1,2})?)$/);
+  if (!m) return null;
+  const n = parseFloat(m[1]);
+  return n >= 1 ? "$" + n.toFixed(2) : null;
 }
-function logout() {
-  state.token = null;
-  localStorage.removeItem("elt_gh_token");
-  location.reload();
+const priceValue = (price) => parseFloat(String(price || "").replace(/[^\d.]/g, "")) || 0;
+
+// A slipped finger ("4.99" for "44.99") is still a valid price, so double-check
+// any bundle price that more than halves or doubles before it goes live.
+function bigPriceChanges() {
+  const before = new Map(state.saved.products.data.products.map((p) => [p.id, priceValue(p.price)]));
+  return state.draft.products.products
+    .filter((p) => isBundle(p) && before.get(p.id))
+    .filter((p) => {
+      const was = before.get(p.id);
+      const now = priceValue(p.price);
+      return now < was / 2 || now > was * 2;
+    })
+    .map((p) => {
+      const was = state.saved.products.data.products.find((x) => x.id === p.id).price;
+      return `• ${p.name}: ${was} → ${p.price}`;
+    });
 }
-function authHeaders() {
-  return { Authorization: "token " + state.token, Accept: "application/vnd.github+json" };
+const priceNumber = (price) => String(price || "").replace(/^\$/, "");
+
+function parseDate(iso) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || "")) return null;
+  const d = new Date(iso + "T00:00:00");
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+function isPastClass(c) {
+  if (c.status === "past") return true;
+  const d = parseDate(c.date);
+  if (!d) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return d < today;
+}
+
+function uniqueId(base, list) {
+  const taken = new Set(list.map((x) => x.id));
+  let id = base || "item-" + Date.now();
+  for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;
+  return id;
+}
+
+// Phones take huge photos; shrink to a sensible size before uploading.
+async function shrinkPhoto(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((ok, bad) => {
+      const i = new Image();
+      i.onload = () => ok(i);
+      i.onerror = () => bad(new Error("That file doesn't look like a photo. Try a JPG or PNG."));
+      i.src = url;
+    });
+    const scale = Math.min(1, 1400 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.naturalWidth * scale);
+    c.height = Math.round(img.naturalHeight * scale);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL("image/jpeg", 0.84);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/* ---------- where saves go ---------- */
+// Passcode sign-in: the site's own Worker does the GitHub work.
+const passcodeBackend = {
+  key: "elt_admin_token",
+  get token() {
+    return localStorage.getItem(this.key);
+  },
+  async call(route, options = {}) {
+    const r = await fetch("/api/admin/" + route, {
+      ...options,
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + this.token },
+      cache: "no-store",
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 401) {
+      signOut();
+      throw new Error(j.error || "Please sign in again.");
+    }
+    if (!r.ok) {
+      const e = new Error(j.error || "Something went wrong. Please try again.");
+      e.stale = Boolean(j.stale);
+      throw e;
+    }
+    return j;
+  },
+  load() {
+    return this.call("files");
+  },
+  async save(path, data, sha, message) {
+    return (await this.call("save", { method: "POST", body: JSON.stringify({ path, data, sha, message }) })).sha;
+  },
+  async upload(base64, ext) {
+    return (await this.call("upload", { method: "POST", body: JSON.stringify({ data: base64, ext }) })).path;
+  },
+};
+
+// Backup: sign in with GitHub and use the GitHub API from the browser.
+const b64ToUtf8 = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, "")), (c) => c.charCodeAt(0)));
+function utf8ToB64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+const githubBackend = {
+  key: "elt_gh_token",
+  get token() {
+    return localStorage.getItem(this.key);
+  },
+  headers() {
+    return { Authorization: "token " + this.token, Accept: "application/vnd.github+json" };
+  },
+  async get(path) {
+    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}&t=${Date.now()}`, {
+      headers: this.headers(),
+      cache: "no-store",
+    });
+    if (r.status === 401) {
+      signOut();
+      throw new Error("Please sign in again.");
+    }
+    if (!r.ok) throw new Error("Could not load " + path);
+    const j = await r.json();
+    return { sha: j.sha, data: JSON.parse(b64ToUtf8(j.content)) };
+  },
+  async load() {
+    const [products, workshops, live] = await Promise.all([this.get(PATHS.products), this.get(PATHS.workshops), this.get(PATHS.live)]);
+    return { products, workshops, live };
+  },
+  async put(path, contentB64, sha, message) {
+    const body = { message, content: contentB64, branch: BRANCH };
+    if (sha) body.sha = sha;
+    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+      method: "PUT",
+      headers: this.headers(),
+      body: JSON.stringify(body),
+    });
+    if (r.status === 401) {
+      signOut();
+      throw new Error("Please sign in again.");
+    }
+    if (r.status === 409) {
+      const e = new Error("Something changed in another window. Loading the latest version…");
+      e.stale = true;
+      throw e;
+    }
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.message || "Save failed");
+    }
+    return r.json();
+  },
+  async save(path, data, sha, message) {
+    return (await this.put(path, utf8ToB64(JSON.stringify(data, null, 2) + "\n"), sha, "Editor: " + message)).content.sha;
+  },
+  async upload(base64, ext) {
+    const path = `assets/photo-${Date.now()}.${ext}`;
+    await this.put(path, base64, null, "Editor: add photo");
+    return path;
+  },
+};
+
+/* ---------- state ---------- */
+const state = {
+  backend: null,
+  saved: null, // { products: {sha,data}, workshops: {sha,data}, live: {sha,data} } — what's on the site
+  draft: null, // { products: data, workshops: data } — her working copy
+  open: null, // "p:<i>" | "c:<i>" | "new:bundle" | "new:other" | "new:class"
+  newItem: null,
+  priceText: {}, // what she's typed in a price box that isn't a valid price yet
+  badPrices: new Set(),
+  previews: {}, // uploaded photo path -> local preview (the site needs ~1 min to publish it)
+  busy: false,
+};
+
+const dirtyFiles = () =>
+  state.draft ? ["products", "workshops"].filter((k) => JSON.stringify(state.draft[k]) !== JSON.stringify(state.saved[k].data)) : [];
+const imgSrc = (path) => state.previews[path] || "/" + path;
+
+/* ---------- rendering ---------- */
+function render() {
+  const items = state.draft.products.products.map((p, i) => ({ p, i }));
+  const classes = state.draft.workshops.workshops
+    .map((c, i) => ({ c, i, past: isPastClass(c) }))
+    .sort((a, b) => a.past - b.past || String(a.c.date || "9").localeCompare(String(b.c.date || "9")) * (a.past ? -1 : 1));
+  $("#editor-view").innerHTML = [
+    liveCard(),
+    bundlesCard(items.filter(({ p }) => isBundle(p))),
+    classesCard(classes),
+    dealCard(),
+    othersCard(items.filter(({ p }) => !isBundle(p))),
+    helpCard(),
+  ].join("");
+  updateSaveBar();
+}
+
+function liveCard() {
+  const on = Boolean(state.saved.live.data.isLive);
+  return `
+    <section class="card live ${on ? "on" : ""}">
+      <div class="switch-row">
+        <div class="label">${on ? "🔴 You're live!" : "Going live on TikTok?"}
+          <small>${on
+            ? "Your website is showing a “Watch live” button. Flip this off when you finish."
+            : "Flip this on when you start a LIVE, and your website shows a “Watch live” button."}</small>
+        </div>
+        <label class="switch big"><input type="checkbox" id="live-toggle" ${on ? "checked" : ""} aria-label="I'm live on TikTok" /><span class="track"></span></label>
+      </div>
+    </section>`;
+}
+
+function thumbHtml(image, emoji) {
+  return image ? `<img class="thumb" src="${esc(imgSrc(image))}" alt="" loading="lazy" />` : `<span class="thumb">${emoji}</span>`;
+}
+
+function bundlesCard(bundles) {
+  return `
+    <section class="card">
+      <h2>Your bundles</h2>
+      <p class="sub">Change a price or flip a bundle to sold out, then tap <b>Save changes</b>.</p>
+      ${bundles.length ? bundles.map(({ p, i }) => productRow(p, i, true)).join("") : `<p class="empty">No bundles yet.</p>`}
+      ${state.open === "new:bundle" ? newProductPanel(true) : `<button class="btn btn-outline btn-block" data-action="new" data-kind="bundle">+ Add a bundle</button>`}
+    </section>`;
+}
+
+function othersCard(others) {
+  return `
+    <section class="card">
+      <h2>Other items</h2>
+      <p class="sub">Custom journals and anything that isn't a bundle.</p>
+      ${others.length ? others.map(({ p, i }) => productRow(p, i, false)).join("") : `<p class="empty">Nothing here yet.</p>`}
+      ${state.open === "new:other" ? newProductPanel(false) : `<button class="btn btn-outline btn-block" data-action="new" data-kind="other">+ Add another item</button>`}
+    </section>`;
+}
+
+function productRow(p, i, bundle) {
+  const open = state.open === "p:" + i;
+  const inStock = statusOf(p) === "available";
+  const controls = bundle
+    ? `<div class="row-controls">
+         <label class="price ${state.badPrices.has(i) ? "bad" : ""}"><span>$</span><input type="text" inputmode="decimal" autocomplete="off" data-price="${i}" value="${esc(state.priceText[i] ?? priceNumber(p.price))}" aria-label="Price for ${esc(p.name)}" /></label>
+         <label class="stock"><span class="switch"><input type="checkbox" data-stock="${i}" ${inStock ? "checked" : ""} aria-label="${esc(p.name)} is in stock" /><span class="track"></span></span><span class="state ${inStock ? "" : "off"}">${inStock ? "In stock" : "Sold out"}</span></label>
+       </div>`
+    : `<div class="row-sub">${esc(p.price || "No price")} · ${esc(STATUS_LABEL[statusOf(p)] || statusOf(p))}</div>`;
+  return `
+    <div class="row ${open ? "open" : ""}">
+      ${thumbHtml(p.image, "🛍️")}
+      <div><div class="row-name">${esc(p.name || "Untitled")}</div>${controls}</div>
+      <button class="link-btn" data-action="toggle" data-target="p:${i}" aria-expanded="${open}">${open ? "Close" : "Edit"}</button>
+    </div>${open ? productPanel(p, i, bundle) : ""}`;
+}
+
+function statusSelect(attrs, current) {
+  return `<select ${attrs}>${Object.entries(STATUS_LABEL)
+    .map(([v, label]) => `<option value="${v}" ${v === current ? "selected" : ""}>${label}</option>`)
+    .join("")}</select>`;
+}
+
+function photoField(image, key) {
+  return `
+    <div class="field">
+      <span style="display:block;font-weight:600;margin:12px 0 5px">Photo</span>
+      <div class="photo-pick">
+        ${image ? `<img src="${esc(imgSrc(image))}" alt="" />` : `<span class="thumb" style="width:84px;height:84px">📷</span>`}
+        <label class="btn btn-ghost">${image ? "Change photo" : "Add a photo"}<input type="file" accept="image/*" data-photo="${key}" /></label>
+      </div>
+    </div>`;
+}
+
+function productPanel(p, i, bundle) {
+  return `
+    <div class="panel">
+      <label class="field"><span>Name</span><input type="text" data-edit="name" data-k="p" data-i="${i}" value="${esc(p.name || "")}" maxlength="120" /></label>
+      ${bundle ? "" : `<div class="row-2">
+        <label class="field"><span>Price</span><input type="text" data-edit="price" data-k="p" data-i="${i}" value="${esc(p.price || "")}" maxlength="40" /><span class="hint">Like $49.99, or “From $49.99”.</span></label>
+        <label class="field"><span>Availability</span>${statusSelect(`data-edit="status" data-k="p" data-i="${i}"`, statusOf(p))}</label>
+      </div>`}
+      ${photoField(p.image, "p:" + i)}
+      <label class="field"><span>Short description</span><textarea data-edit="summary" data-k="p" data-i="${i}" maxlength="600">${esc(p.summary || "")}</textarea></label>
+      <div class="panel-actions">
+        <button class="btn btn-primary grow" data-action="close">Done</button>
+        <button class="btn btn-danger" data-action="remove-product" data-i="${i}">Remove</button>
+      </div>
+    </div>`;
+}
+
+function newProductPanel(bundle) {
+  const n = state.newItem;
+  return `
+    <div class="panel new">
+      <h3>${bundle ? "New bundle" : "New item"}</h3>
+      <label class="field"><span>Name</span><input type="text" data-new="name" value="${esc(n.name)}" placeholder="${bundle ? "e.g. Junk journal bundle - 30 pulls" : "e.g. Custom wedding journal"}" maxlength="120" /></label>
+      ${bundle
+        ? `<label class="field"><span>Price</span><span class="price" style="display:flex"><span>$</span><input type="text" inputmode="decimal" data-new="price" value="${esc(n.price)}" placeholder="49.99" /></span></label>`
+        : `<div class="row-2">
+            <label class="field"><span>Price</span><input type="text" data-new="price" value="${esc(n.price)}" placeholder="From $49.99" maxlength="40" /></label>
+            <label class="field"><span>Availability</span>${statusSelect('data-new="status"', n.status)}</label>
+          </div>`}
+      ${photoField(n.image, "new")}
+      <label class="field"><span>Short description</span><textarea data-new="summary" maxlength="600" placeholder="A sentence or two about it.">${esc(n.summary)}</textarea></label>
+      <div class="panel-actions">
+        <button class="btn btn-primary grow" data-action="add-product" data-kind="${bundle ? "bundle" : "other"}">${bundle ? "Add bundle" : "Add item"}</button>
+        <button class="btn btn-ghost" data-action="close">Cancel</button>
+      </div>
+    </div>`;
+}
+
+function classesCard(classes) {
+  const rows = classes.length
+    ? classes.map(({ c, i, past }) => classRow(c, i, past)).join("")
+    : `<p class="empty">No classes yet.</p>`;
+  return `
+    <section class="card">
+      <h2>Classes</h2>
+      <p class="sub">Classes disappear from your website on their own once the date passes.</p>
+      ${rows}
+      ${state.open === "new:class" ? classPanel(state.newItem, null) : `<button class="btn btn-outline btn-block" data-action="new" data-kind="class">+ Add a class</button>`}
+    </section>`;
+}
+
+function classRow(c, i, past) {
+  const open = state.open === "c:" + i;
+  const d = parseDate(c.date);
+  const badge = d
+    ? `<span class="date-badge"><small>${MONTHS[d.getMonth()]}</small><b>${d.getDate()}</b></span>`
+    : `<span class="date-badge"><small>DATE</small><b>?</b></span>`;
+  const sub = [c.time, c.price].filter(Boolean).map(esc).join(" · ");
+  return `
+    <div class="row ${open ? "open" : ""} ${past ? "past" : ""}">
+      ${badge}
+      <div><div class="row-name">${esc(c.title || "Untitled class")}${past ? `<span class="tag">Past</span>` : ""}</div><div class="row-sub">${sub || "&nbsp;"}</div></div>
+      <button class="link-btn" data-action="toggle" data-target="c:${i}" aria-expanded="${open}">${open ? "Close" : "Edit"}</button>
+    </div>${open ? classPanel(c, i) : ""}`;
+}
+
+function classPanel(c, i) {
+  const isNew = i === null;
+  const bind = (field) => (isNew ? `data-new="${field}"` : `data-edit="${field}" data-k="c" data-i="${i}"`);
+  return `
+    <div class="panel ${isNew ? "new" : ""}">
+      ${isNew ? "<h3>New class</h3>" : ""}
+      <label class="field"><span>Class name</span><input type="text" ${bind("title")} value="${esc(c.title || "")}" placeholder="e.g. Paper Bag Junk Journal" maxlength="160" /></label>
+      <div class="row-2">
+        <label class="field"><span>Date</span><input type="date" ${bind("date")} value="${esc(c.date || "")}" /></label>
+        <label class="field"><span>Time</span><input type="text" ${bind("time")} value="${esc(c.time || "")}" placeholder="6 PM ET" maxlength="40" /></label>
+      </div>
+      <div class="row-2">
+        <label class="field"><span>Price</span><input type="text" ${bind("price")} value="${esc(c.price || "")}" placeholder="$50" maxlength="40" /></label>
+        <label class="field"><span>Where</span><input type="text" ${bind("location")} value="${esc(c.location || DEFAULT_CLASS_PLACE)}" maxlength="120" /></label>
+      </div>
+      <label class="field"><span>Details &amp; what to bring</span><textarea ${bind("description")} maxlength="2000" placeholder="Describe the class and list any supplies.">${esc(c.description || "")}</textarea></label>
+      <div class="panel-actions">
+        ${isNew
+          ? `<button class="btn btn-primary grow" data-action="add-class">Add class</button><button class="btn btn-ghost" data-action="close">Cancel</button>`
+          : `<button class="btn btn-primary grow" data-action="close">Done</button><button class="btn btn-danger" data-action="remove-class" data-i="${i}">Remove</button>`}
+      </div>
+    </div>`;
+}
+
+function dealCard() {
+  const shop = state.draft.products.shop;
+  return `
+    <section class="card">
+      <h2>Website deal</h2>
+      <p class="sub">The little note in the corner of your website.</p>
+      <div class="switch-row">
+        <div class="label">Show the deal</div>
+        <label class="switch"><input type="checkbox" data-deal-toggle ${shop.promoEnabled ? "checked" : ""} aria-label="Show the deal" /><span class="track"></span></label>
+      </div>
+      <label class="field"><span>Deal text</span><input type="text" data-deal-text value="${esc(shop.promoText || "")}" placeholder="5 extra envelopes FREE with every order!" maxlength="90" /></label>
+    </section>`;
+}
+
+function helpCard() {
+  return `
+    <section class="help">
+      <p>Saved changes show on your website in about a minute.</p>
+      <p><a href="/" target="_blank" rel="noopener">Open your website ↗</a></p>
+    </section>`;
+}
+
+function updateSaveBar() {
+  const badPrice = state.badPrices.size > 0;
+  $("#savebar").hidden = !dirtyFiles().length && !badPrice;
+  $("#savebar .note").textContent = badPrice ? "Fix the price in red (like 44.99)" : "You have unsaved changes";
+  $("#save-btn").disabled = state.busy || badPrice;
+  $("#discard-btn").disabled = state.busy;
+  $("#save-btn").textContent = state.busy ? "Saving…" : "Save changes";
+}
+
+/* ---------- actions ---------- */
+// Someone saved from another phone or tab first: load theirs and say so plainly.
+async function recoverFromStale() {
+  await loadFiles().catch(() => {});
+  toast("Your shop was changed somewhere else, so this is the newest version. Please make your change again.", true);
+}
+
+function setOpen(key, newItem = null) {
+  state.open = key;
+  state.newItem = newItem;
+  render();
+  if (key) {
+    const panel = document.querySelector(".panel");
+    if (panel) panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+}
+
+function addProduct(kind) {
+  const n = state.newItem;
+  const list = state.draft.products.products;
+  const name = n.name.trim();
+  if (!name) return toast("Please give it a name.", true);
+  let price = n.price.trim();
+  if (kind === "bundle") {
+    price = normalizePrice(price);
+    if (!price) return toast("Please enter a price, like 49.99.", true);
+  }
+  const status = kind === "bundle" ? "available" : n.status;
+  list.push({
+    id: uniqueId(slugify(name), list),
+    name,
+    price,
+    summary: n.summary.trim(),
+    details: "",
+    status,
+    available: status === "available",
+    featured: false,
+    category: kind === "bundle" ? "Live bundles" : "Custom",
+    image: n.image || "",
+    alt: name,
+  });
+  setOpen(null);
+  toast("Added. Tap Save changes to put it on your website.");
+}
+
+function addClass() {
+  const n = state.newItem;
+  const list = state.draft.workshops.workshops;
+  const title = n.title.trim();
+  if (!title) return toast("Please give the class a name.", true);
+  if (!parseDate(n.date)) return toast("Please pick a date for the class.", true);
+  list.push({
+    id: uniqueId(slugify(title), list),
+    title,
+    date: n.date,
+    time: n.time.trim(),
+    price: n.price.trim(),
+    location: n.location.trim() || DEFAULT_CLASS_PLACE,
+    format: "Online",
+    status: "upcoming",
+    signupUrl: "contact.html?item=workshop",
+    description: n.description.trim(),
+  });
+  setOpen(null);
+  toast("Class added. Tap Save changes to put it on your website.");
+}
+
+function removeAt(kind, i) {
+  const list = kind === "p" ? state.draft.products.products : state.draft.workshops.workshops;
+  const label = kind === "p" ? list[i].name : list[i].title;
+  if (!confirm(`Remove “${label || "this"}”?\nIt comes off your website when you tap Save changes.`)) return;
+  list.splice(i, 1);
+  state.priceText = {};
+  state.badPrices = new Set();
+  setOpen(null);
+}
+
+async function saveAll() {
+  if (state.badPrices.size) {
+    const bad = document.querySelector(".price.bad input");
+    if (bad) bad.focus();
+    return toast("A price needs fixing first. Use a number like 44.99.", true);
+  }
+  const dirty = dirtyFiles();
+  if (!dirty.length || state.busy) return;
+  const big = bigPriceChanges();
+  if (big.length && !confirm(`Just checking — that's a big price change:\n\n${big.join("\n")}\n\nTap OK if that's right.`)) return;
+  state.busy = true;
+  updateSaveBar();
+  try {
+    for (const k of dirty) {
+      const sha = await state.backend.save(PATHS[k], state.draft[k], state.saved[k].sha, k === "products" ? "update shop" : "update classes");
+      state.saved[k] = { sha, data: clone(state.draft[k]) };
+    }
+    state.open = null;
+    state.newItem = null;
+    toast("Saved! Your website updates in about a minute.");
+  } catch (e) {
+    if (e.stale) await recoverFromStale();
+    else toast(e.message, true);
+  } finally {
+    state.busy = false;
+    render();
+  }
+}
+
+function discardAll() {
+  if (!confirm("Undo all the changes you haven't saved?")) return;
+  state.draft = { products: clone(state.saved.products.data), workshops: clone(state.saved.workshops.data) };
+  state.priceText = {};
+  state.badPrices = new Set();
+  setOpen(null);
+}
+
+async function saveLive(on) {
+  const toggle = $("#live-toggle");
+  toggle.disabled = true;
+  const live = clone(state.saved.live.data);
+  live.isLive = on;
+  if (!live.url) live.url = TIKTOK_LIVE;
+  try {
+    const sha = await state.backend.save(PATHS.live, live, state.saved.live.sha, on ? "go live" : "end live");
+    state.saved.live = { sha, data: live };
+    toast(on ? "You're live! Your website shows the “Watch live” button in about a minute." : "Live button turned off.");
+  } catch (e) {
+    if (e.stale) await recoverFromStale();
+    else toast(e.message, true);
+  }
+  render();
+}
+
+async function addPhoto(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const key = input.dataset.photo;
+  toast("Adding your photo…");
+  try {
+    const dataUrl = await shrinkPhoto(file);
+    const path = await state.backend.upload(dataUrl.split(",")[1], "jpg");
+    state.previews[path] = dataUrl;
+    if (key === "new") state.newItem.image = path;
+    else state.draft.products.products[Number(key.slice(2))].image = path;
+    render();
+    toast("Photo added. Tap Save changes to keep it.");
+  } catch (e) {
+    toast(e.message || "That photo didn't upload. Please try again.", true);
+  }
+}
+
+/* ---------- events ---------- */
+function onClick(e) {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const { action, kind, target } = btn.dataset;
+  const i = btn.dataset.i !== undefined ? Number(btn.dataset.i) : null;
+  if (action === "toggle") return setOpen(state.open === target ? null : target);
+  if (action === "close") return setOpen(null);
+  if (action === "new") {
+    const blank = kind === "class"
+      ? { title: "", date: "", time: "", price: "", location: DEFAULT_CLASS_PLACE, description: "" }
+      : { name: "", price: "", summary: "", image: "", status: "custom-order" };
+    return setOpen("new:" + kind, blank);
+  }
+  if (action === "add-product") return addProduct(kind);
+  if (action === "add-class") return addClass();
+  if (action === "remove-product") return removeAt("p", i);
+  if (action === "remove-class") return removeAt("c", i);
+}
+
+function onInput(e) {
+  const el = e.target;
+  if (el.dataset.price !== undefined) {
+    const i = Number(el.dataset.price);
+    const norm = normalizePrice(el.value);
+    state.priceText[i] = el.value;
+    if (norm) {
+      state.draft.products.products[i].price = norm;
+      state.badPrices.delete(i);
+    } else {
+      state.badPrices.add(i);
+    }
+    el.closest(".price").classList.toggle("bad", !norm);
+  } else if (el.dataset.edit) {
+    const list = el.dataset.k === "p" ? state.draft.products.products : state.draft.workshops.workshops;
+    const item = list[Number(el.dataset.i)];
+    item[el.dataset.edit] = el.value;
+    if (el.dataset.edit === "status") item.available = el.value === "available";
+  } else if (el.dataset.new) {
+    state.newItem[el.dataset.new] = el.value;
+  } else if (el.hasAttribute("data-deal-text")) {
+    state.draft.products.shop.promoText = el.value;
+  }
+  updateSaveBar();
+}
+
+function onChange(e) {
+  const el = e.target;
+  if (el.id === "live-toggle") return saveLive(el.checked);
+  if (el.dataset.photo !== undefined) return addPhoto(el);
+  if (el.dataset.stock !== undefined) {
+    const p = state.draft.products.products[Number(el.dataset.stock)];
+    p.status = el.checked ? "available" : "sold-out";
+    p.available = el.checked;
+    const label = el.closest(".stock").querySelector(".state");
+    label.textContent = el.checked ? "In stock" : "Sold out";
+    label.classList.toggle("off", !el.checked);
+  } else if (el.hasAttribute("data-deal-toggle")) {
+    state.draft.products.shop.promoEnabled = el.checked;
+  }
+  updateSaveBar();
+}
+
+// Tidy a valid price when she leaves the box ("44" -> "44.00").
+function onFocusOut(e) {
+  const el = e.target;
+  if (el.dataset.price === undefined) return;
+  const i = Number(el.dataset.price);
+  if (!state.badPrices.has(i)) {
+    delete state.priceText[i];
+    el.value = priceNumber(state.draft.products.products[i].price);
+  }
+}
+
+/* ---------- sign in / out ---------- */
+async function loadFiles() {
+  const files = await state.backend.load();
+  state.saved = files;
+  state.draft = { products: clone(files.products.data), workshops: clone(files.workshops.data) };
+  if (!state.draft.products.shop) state.draft.products.shop = {};
+  state.priceText = {};
+  state.badPrices = new Set();
+  state.open = null;
+  state.newItem = null;
+  render();
+}
+
+async function openEditor(backend) {
+  state.backend = backend;
+  $("#login-view").hidden = true;
+  $("#editor-view").hidden = false;
+  $("#signout-btn").hidden = false;
+  $("#editor-view").innerHTML = `<p class="help" style="padding:40px 0">Loading your shop…</p>`;
+  try {
+    await loadFiles();
+  } catch (e) {
+    $("#editor-view").innerHTML = `
+      <section class="card">
+        <h2>Couldn't load your shop</h2>
+        <p class="sub">${esc(e.message || "Please check your internet connection.")}</p>
+        <div class="panel-actions"><button class="btn btn-primary" onclick="location.reload()">Try again</button></div>
+      </section>`;
+  }
+}
+
+async function showLogin() {
+  $("#login-view").hidden = false;
+  $("#editor-view").hidden = true;
+  $("#signout-btn").hidden = true;
+  let configured = false;
+  try {
+    const r = await fetch("/api/admin/status", { cache: "no-store" });
+    configured = r.ok && (await r.json()).configured === true;
+  } catch {
+    /* offline or running locally */
+  }
+  $("#passcode-form").hidden = !configured;
+  $("#not-setup").hidden = configured;
+}
+
+async function submitPasscode(e) {
+  e.preventDefault();
+  const btn = $("#passcode-btn");
+  btn.disabled = true;
+  btn.textContent = "Checking…";
+  $("#login-msg").textContent = "";
+  try {
+    const r = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ passcode: $("#passcode").value }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.token) throw new Error(j.error || "That passcode didn't work.");
+    localStorage.setItem(passcodeBackend.key, j.token);
+    await openEditor(passcodeBackend);
+  } catch (err) {
+    $("#login-msg").textContent = err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Sign in";
+  }
 }
 
 let authWindow;
-function startLogin() {
-  $("#login-msg").textContent = "Opening GitHub sign-in…";
+function startGitHubLogin() {
   const w = 620, h = 720;
-  const left = Math.max(0, (screen.width - w) / 2);
-  const top = Math.max(0, (screen.height - h) / 2);
-  const url = WORKER + "/auth?provider=github&scope=repo&site_id=" + encodeURIComponent(location.host);
-  authWindow = window.open(url, "elt-github-auth", `width=${w},height=${h},left=${left},top=${top}`);
+  const url = `${OAUTH_WORKER}/auth?provider=github&scope=repo&site_id=${encodeURIComponent(location.host)}`;
+  authWindow = window.open(url, "elt-github-auth", `width=${w},height=${h},left=${Math.max(0, (screen.width - w) / 2)},top=${Math.max(0, (screen.height - h) / 2)}`);
   window.addEventListener("message", onAuthMessage);
 }
 function onAuthMessage(e) {
   if (typeof e.data !== "string") return;
   if (e.data === "authorizing:github") {
-    // handshake: tell the popup we're ready to receive the token
-    if (authWindow) authWindow.postMessage(e.data, e.origin);
+    if (authWindow) authWindow.postMessage(e.data, e.origin); // handshake
     return;
   }
-  const okPrefix = "authorization:github:success:";
-  const errPrefix = "authorization:github:error:";
-  if (e.data.indexOf(okPrefix) === 0) {
+  const ok = "authorization:github:success:";
+  if (e.data.startsWith(ok)) {
     window.removeEventListener("message", onAuthMessage);
     try {
-      const payload = JSON.parse(e.data.slice(okPrefix.length));
-      setToken(payload.token);
+      localStorage.setItem(githubBackend.key, JSON.parse(e.data.slice(ok.length)).token);
       if (authWindow) authWindow.close();
-      boot();
-    } catch (err) {
-      $("#login-msg").textContent = "Sign-in failed — please try again.";
+      openEditor(githubBackend);
+    } catch {
+      $("#login-msg").textContent = "GitHub sign-in failed. Please try again.";
     }
-  } else if (e.data.indexOf(errPrefix) === 0) {
+  } else if (e.data.startsWith("authorization:github:error:")) {
     window.removeEventListener("message", onAuthMessage);
     if (authWindow) authWindow.close();
-    $("#login-msg").textContent = "Sign-in was cancelled or failed.";
+    $("#login-msg").textContent = "GitHub sign-in was cancelled.";
   }
 }
 
-/* ---------- GitHub API ---------- */
-function b64ToUtf8(b64) {
-  return decodeURIComponent(escape(atob(b64.replace(/\s/g, ""))));
+function signOut() {
+  localStorage.removeItem(passcodeBackend.key);
+  localStorage.removeItem(githubBackend.key);
+  state.draft = null; // don't warn about unsaved changes on the way out
+  state.badPrices = new Set();
+  location.reload();
 }
-function utf8ToB64(str) {
-  return btoa(unescape(encodeURIComponent(str)));
-}
-async function loadFile(path) {
-  const r = await fetch(
-    `https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}&t=${Date.now()}`,
-    { headers: authHeaders(), cache: "no-store" }
-  );
-  if (r.status === 401) { logout(); throw new Error("Signed out — please sign in again."); }
-  if (!r.ok) throw new Error("Could not load " + path);
-  const j = await r.json();
-  return { sha: j.sha, data: JSON.parse(b64ToUtf8(j.content)) };
-}
-async function saveJson(path, key, message) {
-  const file = state.files[key];
-  const body = {
-    message,
-    content: utf8ToB64(JSON.stringify(file.data, null, 2) + "\n"),
-    sha: file.sha,
-    branch: BRANCH,
-  };
-  const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
-    method: "PUT",
-    headers: authHeaders(),
-    body: JSON.stringify(body),
-  });
-  if (r.status === 401) { logout(); throw new Error("Signed out."); }
-  if (!r.ok) {
-    const e = await r.json().catch(() => ({}));
-    throw new Error(e.message || "Save failed");
+
+/* ---------- start ---------- */
+const editor = $("#editor-view");
+editor.addEventListener("click", onClick);
+editor.addEventListener("input", onInput);
+editor.addEventListener("change", onChange);
+editor.addEventListener("focusout", onFocusOut);
+$("#save-btn").addEventListener("click", saveAll);
+$("#discard-btn").addEventListener("click", discardAll);
+$("#passcode-form").addEventListener("submit", submitPasscode);
+$("#github-btn").addEventListener("click", startGitHubLogin);
+$("#signout-btn").addEventListener("click", () => {
+  if (dirtyFiles().length && !confirm("You have unsaved changes. Sign out anyway?")) return;
+  signOut();
+});
+window.addEventListener("beforeunload", (e) => {
+  if (dirtyFiles().length || state.badPrices.size) {
+    e.preventDefault();
+    e.returnValue = "";
   }
-  const j = await r.json();
-  file.sha = j.content.sha; // keep sha fresh for the next save
-}
-async function uploadImage(file) {
-  const dataUrl = await new Promise((resolve, reject) => {
-    const fr = new FileReader();
-    fr.onload = () => resolve(fr.result);
-    fr.onerror = reject;
-    fr.readAsDataURL(file);
-  });
-  const base64 = String(dataUrl).split(",")[1];
-  let ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (!ext) ext = "jpg";
-  const path = "assets/photo-" + Date.now() + "." + ext;
-  const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
-    method: "PUT",
-    headers: authHeaders(),
-    body: JSON.stringify({ message: "Upload photo via editor", content: base64, branch: BRANCH }),
-  });
-  if (!r.ok) {
-    const e = await r.json().catch(() => ({}));
-    throw new Error(e.message || "Photo upload failed");
-  }
-  return path;
-}
+});
 
-/* ---------- rendering ---------- */
-const STATUS_LABEL = { available: "Available", "sold-out": "Sold out", "custom-order": "Made to order" };
-
-function render() {
-  const products = state.files.products.data.products || [];
-  const shop = state.files.products.data.shop || {};
-  const classes = state.files.workshops.data.workshops || [];
-  const live = state.files.live.data || {};
-
-  $("#editor-view").innerHTML = `
-    ${liveCard(live)}
-    ${dealCard(shop)}
-    ${listCard("product", "🛍️", "Products", "Your shop items. Tap Edit to change one, or Add a new one.", products, productItemHtml)}
-    ${listCard("class", "🎀", "Classes", "Your teaching classes. Delete a class once it's over.", classes, classItemHtml)}
-    <p style="text-align:center;color:var(--muted);font-size:.9rem;margin-top:30px">
-      Changes go live on the website about a minute after you save.
-    </p>
-  `;
-}
-
-function liveCard(live) {
-  const on = !!live.isLive;
-  return `
-    <section class="card" data-section="live">
-      <h2>🔴 Live now</h2>
-      <p class="sub">Flip this on when you start a TikTok LIVE, and off when you finish.</p>
-      <div class="switch-row">
-        <span class="switch-label">${on ? "You're live! The banner is showing." : "You're offline."}</span>
-        <label class="switch">
-          <input type="checkbox" id="live-toggle" ${on ? "checked" : ""} />
-          <span class="track"></span>
-        </label>
-      </div>
-    </section>`;
-}
-
-function dealCard(shop) {
-  const on = !!shop.promoEnabled;
-  const text = shop.promoText || "";
-  return `
-    <section class="card" data-section="deal">
-      <h2>🎁 Homepage deal</h2>
-      <p class="sub">A little announcement ribbon at the top of the home page.</p>
-      <div class="switch-row">
-        <span class="switch-label">Show the deal banner</span>
-        <label class="switch">
-          <input type="checkbox" id="deal-toggle" ${on ? "checked" : ""} />
-          <span class="track"></span>
-        </label>
-      </div>
-      <label class="field">
-        <span>Deal text</span>
-        <input type="text" id="deal-text" value="${attr(text)}" placeholder="5 extra envelopes FREE with every order!" />
-      </label>
-      <div class="form-actions">
-        <button class="btn btn-primary btn-sm" data-action="save-deal">Save deal</button>
-      </div>
-    </section>`;
-}
-
-function listCard(kind, icon, title, sub, items, itemFn) {
-  const rows = items.length
-    ? items.map((it, i) => itemFn(it, i)).join("")
-    : `<p class="empty">Nothing here yet. Tap “Add” to create one.</p>`;
-  return `
-    <section class="card" data-section="${kind}s">
-      <h2>${icon} ${esc(title)}</h2>
-      <p class="sub">${esc(sub)}</p>
-      <div data-list="${kind}">${rows}</div>
-      <div class="form-actions">
-        <button class="btn btn-outline btn-block" data-action="add-${kind}">+ Add ${kind === "product" ? "product" : "class"}</button>
-      </div>
-    </section>`;
-}
-
-function productItemHtml(p, i) {
-  const status = p.status || "available";
-  const thumb = p.image
-    ? `<img class="thumb" src="/${esc(p.image)}" alt="" />`
-    : `<span class="thumb">🖼️</span>`;
-  return `
-    <div class="item">
-      ${thumb}
-      <div class="meta">
-        <div class="name">${esc(p.name || "Untitled")}</div>
-        <div class="detail">${esc(p.price || "—")} · <span class="pill ${status}">${esc(STATUS_LABEL[status] || status)}</span></div>
-      </div>
-      <div class="row-actions">
-        <button class="btn btn-ghost btn-sm" data-action="edit-product" data-i="${i}">Edit</button>
-        <button class="btn btn-danger btn-sm" data-action="del-product" data-i="${i}">Remove</button>
-      </div>
-    </div>`;
-}
-
-function classItemHtml(c, i) {
-  return `
-    <div class="item">
-      <span class="thumb">🗓️</span>
-      <div class="meta">
-        <div class="name">${esc(c.title || "Untitled class")}</div>
-        <div class="detail">${esc(c.date || "no date")}${c.price ? " · " + esc(c.price) : ""}</div>
-      </div>
-      <div class="row-actions">
-        <button class="btn btn-ghost btn-sm" data-action="edit-class" data-i="${i}">Edit</button>
-        <button class="btn btn-danger btn-sm" data-action="del-class" data-i="${i}">Remove</button>
-      </div>
-    </div>`;
-}
-
-/* ---------- edit forms ---------- */
-function productForm(p) {
-  const status = p.status || "available";
-  const cat = p.category || "Live bundles";
-  const opt = (v, cur, label) => `<option value="${attr(v)}" ${v === cur ? "selected" : ""}>${esc(label)}</option>`;
-  return `
-    <div class="editform" data-form="product">
-      <label class="field"><span>Name</span>
-        <input type="text" data-f="name" value="${attr(p.name || "")}" placeholder="e.g. 15-pull bundle" /></label>
-      <label class="field"><span>Photo</span>
-        <input type="file" accept="image/*" data-f="imagefile" />
-        <img class="photo-preview" data-preview src="${p.image ? "/" + attr(p.image) : ""}" alt="" ${p.image ? "" : 'style="display:none"'} />
-        <input type="hidden" data-f="image" value="${attr(p.image || "")}" />
-      </label>
-      <div class="row-2">
-        <label class="field"><span>Price</span>
-          <input type="text" data-f="price" value="${attr(p.price || "")}" placeholder="$45" /></label>
-        <label class="field"><span>Availability</span>
-          <select data-f="status">
-            ${opt("available", status, "Available")}${opt("sold-out", status, "Sold out")}${opt("custom-order", status, "Made to order")}
-          </select></label>
-      </div>
-      <label class="field"><span>Type</span>
-        <select data-f="category">
-          ${opt("Live bundles", cat, "Live bundle (shows in the pull-price grid)")}${opt("Custom", cat, "Custom / other")}
-        </select></label>
-      <label class="field"><span>Short description</span>
-        <textarea data-f="summary" placeholder="A sentence or two shown under the name.">${esc(p.summary || "")}</textarea></label>
-      <label class="field"><span>Buy link — card / Klarna / Affirm <span class="hint">(leave blank for bundles — they get card checkout automatically through the cart; only for other fixed-price items)</span></span>
-        <input type="text" data-f="payLink" value="${attr(p.payLink || "")}" placeholder="https://buy.stripe.com/..." /></label>
-      <div class="form-actions">
-        <button class="btn btn-primary" data-action="save-product">Save product</button>
-        <button class="btn btn-ghost" data-action="cancel-edit">Cancel</button>
-        <span class="saving" data-saving hidden>Saving…</span>
-      </div>
-    </div>`;
-}
-
-function classForm(c) {
-  return `
-    <div class="editform" data-form="class">
-      <label class="field"><span>Class name</span>
-        <input type="text" data-f="title" value="${attr(c.title || "")}" placeholder="e.g. Paper Bag Junk Journal" /></label>
-      <div class="row-2">
-        <label class="field"><span>Date</span>
-          <input type="date" data-f="date" value="${attr(c.date || "")}" /></label>
-        <label class="field"><span>Time</span>
-          <input type="text" data-f="time" value="${attr(c.time || "")}" placeholder="6 PM ET" /></label>
-      </div>
-      <div class="row-2">
-        <label class="field"><span>Price</span>
-          <input type="text" data-f="price" value="${attr(c.price || "")}" placeholder="$50" /></label>
-        <label class="field"><span>Where</span>
-          <input type="text" data-f="location" value="${attr(c.location || "Live on TikTok @stephanie.davis015")}" /></label>
-      </div>
-      <label class="field"><span>Details / what to bring</span>
-        <textarea data-f="description" placeholder="Describe the class and list any supplies.">${esc(c.description || "")}</textarea></label>
-      <div class="form-actions">
-        <button class="btn btn-primary" data-action="save-class">Save class</button>
-        <button class="btn btn-ghost" data-action="cancel-edit">Cancel</button>
-        <span class="saving" data-saving hidden>Saving…</span>
-      </div>
-    </div>`;
-}
-
-function openForm(kind, index) {
-  state.editing = { kind, index };
-  const isProduct = kind === "product";
-  const list = isProduct ? state.files.products.data.products : state.files.workshops.data.workshops;
-  const existing = index === null ? {} : list[index] || {};
-  const formHtml = isProduct ? productForm(existing) : classForm(existing);
-  const listEl = $(`[data-list="${kind}"]`);
-  // replace the whole list area with the form for focus
-  listEl.insertAdjacentHTML("beforebegin", `<div data-formwrap>${formHtml}</div>`);
-  const wrap = $("[data-formwrap]");
-  listEl.style.display = "none";
-  wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  const fileInput = $('[data-f="imagefile"]', wrap);
-  if (fileInput) fileInput.addEventListener("change", onPhotoPick);
-}
-function closeForm() {
-  state.editing = null;
-  const wrap = $("[data-formwrap]");
-  if (wrap) wrap.remove();
-  render();
-  wireSectionEvents();
-}
-
-async function onPhotoPick(e) {
-  const file = e.target.files && e.target.files[0];
-  if (!file) return;
-  const wrap = $("[data-formwrap]");
-  const preview = $("[data-preview]", wrap);
-  toast("Uploading photo…");
-  try {
-    const path = await uploadImage(file);
-    $('[data-f="image"]', wrap).value = path;
-    preview.src = "/" + path;
-    preview.style.display = "";
-    toast("Photo added");
-  } catch (err) {
-    toast(err.message || "Photo upload failed", true);
-  }
-}
-
-function readForm(wrap) {
-  const out = {};
-  wrap.querySelectorAll("[data-f]").forEach((el) => {
-    if (el.dataset.f === "imagefile") return;
-    out[el.dataset.f] = el.value.trim();
-  });
-  return out;
-}
-
-/* ---------- actions ---------- */
-async function saveProduct() {
-  const wrap = $("[data-formwrap]");
-  const vals = readForm(wrap);
-  if (!vals.name) return toast("Please enter a name.", true);
-  if (!vals.price) return toast("Please enter a price.", true);
-  const { kind, index } = state.editing;
-  const list = state.files.products.data.products;
-  const base = index === null ? {} : { ...list[index] };
-  const updated = { ...base, name: vals.name, image: vals.image || "", price: vals.price, status: vals.status, category: vals.category, summary: vals.summary, payLink: vals.payLink || "" };
-  if (!updated.id) updated.id = slugify(vals.name) || "item-" + Date.now();
-  if (index === null) list.push(updated);
-  else list[index] = updated;
-  await commit("products", "products.json", index === null ? "Add product" : "Update product", wrap);
-}
-async function saveClass() {
-  const wrap = $("[data-formwrap]");
-  const vals = readForm(wrap);
-  if (!vals.title) return toast("Please enter a class name.", true);
-  const { index } = state.editing;
-  const list = state.files.workshops.data.workshops;
-  const base = index === null ? { signupUrl: "contact.html?item=workshop", status: "upcoming" } : { ...list[index] };
-  const updated = { ...base, title: vals.title, date: vals.date, time: vals.time, price: vals.price, location: vals.location, description: vals.description };
-  if (!updated.id) updated.id = slugify(vals.title) || "class-" + Date.now();
-  if (index === null) list.push(updated);
-  else list[index] = updated;
-  await commit("workshops", "workshops.json", index === null ? "Add class" : "Update class", wrap);
-}
-async function commit(key, path, message, wrap) {
-  const saving = wrap ? $("[data-saving]", wrap) : null;
-  if (saving) saving.hidden = false;
-  try {
-    await saveJson(path, key, message);
-    toast("Saved! Your site updates in about a minute.");
-    closeForm();
-  } catch (err) {
-    if (saving) saving.hidden = true;
-    toast(err.message || "Save failed", true);
-  }
-}
-async function removeItem(kind, index) {
-  const isProduct = kind === "product";
-  const list = isProduct ? state.files.products.data.products : state.files.workshops.data.workshops;
-  const name = isProduct ? list[index] && list[index].name : list[index] && list[index].title;
-  if (!confirm(`Remove “${name || "this item"}”? This can't be undone.`)) return;
-  list.splice(index, 1);
-  try {
-    await saveJson(isProduct ? "products.json" : "workshops.json", isProduct ? "products" : "workshops", "Remove " + kind);
-    toast("Removed.");
-    render();
-    wireSectionEvents();
-  } catch (err) {
-    toast(err.message || "Could not remove", true);
-  }
-}
-async function toggleLive(on) {
-  const live = state.files.live.data;
-  live.isLive = on;
-  if (!live.url) live.url = TIKTOK_LIVE;
-  try {
-    await saveJson("live.json", "live", on ? "Go live" : "End live");
-    toast(on ? "You're live! Banner is showing." : "Live banner turned off.");
-    render();
-    wireSectionEvents();
-  } catch (err) {
-    toast(err.message || "Could not update", true);
-    render();
-    wireSectionEvents();
-  }
-}
-async function saveDeal() {
-  const shop = state.files.products.data.shop || (state.files.products.data.shop = {});
-  shop.promoEnabled = $("#deal-toggle").checked;
-  shop.promoText = $("#deal-text").value.trim();
-  try {
-    await saveJson("products.json", "products", "Update homepage deal");
-    toast("Deal saved!");
-  } catch (err) {
-    toast(err.message || "Could not save the deal", true);
-  }
-}
-
-/* ---------- events ---------- */
-function wireSectionEvents() {
-  const liveToggle = $("#live-toggle");
-  if (liveToggle) liveToggle.addEventListener("change", (e) => toggleLive(e.target.checked));
-}
-function onEditorClick(e) {
-  const btn = e.target.closest("[data-action]");
-  if (!btn) return;
-  const action = btn.dataset.action;
-  const i = btn.dataset.i !== undefined ? Number(btn.dataset.i) : null;
-  if (action === "add-product") return openForm("product", null);
-  if (action === "add-class") return openForm("class", null);
-  if (action === "edit-product") return openForm("product", i);
-  if (action === "edit-class") return openForm("class", i);
-  if (action === "cancel-edit") return closeForm();
-  if (action === "save-product") return saveProduct();
-  if (action === "save-class") return saveClass();
-  if (action === "del-product") return removeItem("product", i);
-  if (action === "del-class") return removeItem("class", i);
-  if (action === "save-deal") return saveDeal();
-}
-
-/* ---------- boot ---------- */
-async function boot() {
-  $("#login-view").hidden = true;
-  $("#editor-view").hidden = false;
-  $("#logout-btn").hidden = false;
-  $("#editor-view").innerHTML = `<p style="text-align:center;color:var(--muted);padding:40px">Loading your shop…</p>`;
-  try {
-    const [products, workshops, live] = await Promise.all([
-      loadFile("products.json"),
-      loadFile("workshops.json"),
-      loadFile("live.json"),
-    ]);
-    state.files = { products, workshops, live };
-    render();
-    wireSectionEvents();
-  } catch (err) {
-    $("#editor-view").innerHTML = `<div class="card"><p>${esc(err.message || "Something went wrong loading your shop.")}</p><button class="btn btn-ghost" onclick="location.reload()">Try again</button></div>`;
-  }
-}
-
-$("#login-btn").addEventListener("click", startLogin);
-$("#logout-btn").addEventListener("click", logout);
-$("#editor-view").addEventListener("click", onEditorClick);
-
-if (state.token) boot();
+if (passcodeBackend.token) openEditor(passcodeBackend);
+else if (githubBackend.token) openEditor(githubBackend);
+else showLogin();

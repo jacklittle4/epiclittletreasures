@@ -1,0 +1,7 @@
+# Files in this folder that are NOT part of the public website.
+worker.js
+wrangler.toml
+*.md
+.gitignore
+.assetsignore
+.claude
