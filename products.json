@@ -16,7 +16,7 @@
     {
       "details": "Bundles may include vintage paper, paper clips, coffee paper, wax seals, pens, and other small surprises.\n\nPlease let me know if you are a reader, a snarky person, fav primary color\n",
       "summary": "A TikTok live junk journal bundle with 10 pulls. Price includes shipping.",
-      "price": "$39.99",
+      "price": "$44.99",
       "alt": "Epic Bundles tray packed with vintage papers, tags, clips, and junk journal surprises",
       "available": true,
       "name": "Junk journal bundle - 10 pulls",
@@ -24,13 +24,12 @@
       "status": "available",
       "id": "junk-journal-bundle-10",
       "image": "assets/logo-moth.png",
-      "category": "Live bundles",
-      "payLink": "https://buy.stripe.com/5kQbJ2bc08oH4xt3Cu4Ja00"
+      "category": "Live bundles"
     },
     {
       "details": "A good middle option for buyers who want more paper, clips, seals, pens, and surprise pieces.\n\nPlease let me know if you are a reader, a snarky person, fav primary color\n",
       "summary": "A larger TikTok live junk journal bundle with 15 pulls. Price includes shipping.",
-      "price": "$49.99",
+      "price": "$54.99",
       "alt": "Green tray of junk journal supplies, vintage cards, stickers, and ephemera",
       "available": true,
       "name": "Junk journal bundle - 15 pulls",
@@ -38,13 +37,12 @@
       "status": "available",
       "id": "junk-journal-bundle-15",
       "image": "assets/logo-moth.png",
-      "category": "Live bundles",
-      "payLink": "https://buy.stripe.com/7sY7sMa7W8oHbZVdd44Ja01"
+      "category": "Live bundles"
     },
     {
       "details": "Great for junk journal makers who want a wider mix of paper, embellishments, and useful bits.",
       "summary": "A fuller TikTok live junk journal bundle with 20 pulls. Price includes shipping.",
-      "price": "$59.99",
+      "price": "$64.99",
       "alt": "Junk journal bundle with sheet music, vintage papers, a tote, and craft supplies",
       "available": true,
       "name": "Junk journal bundle - 20 pulls",
@@ -52,13 +50,12 @@
       "status": "available",
       "id": "junk-journal-bundle-20",
       "image": "assets/logo-moth.png",
-      "category": "Live bundles",
-      "payLink": "https://buy.stripe.com/cNi3cw7ZO6gz8NJ0qi4Ja02"
+      "category": "Live bundles"
     },
     {
       "details": "A generous bundle for serious paper crafters, junk journal makers, and live-sale regulars.\n\nPlease let me know if you are a reader, a snarky person, fav primary color\n",
       "summary": "The biggest listed TikTok live junk journal bundle with 25 pulls. Price includes shipping.",
-      "price": "$69.99",
+      "price": "$74.99",
       "alt": "A generous junk journal bundle tray of papers, tags, trims, and surprises",
       "available": true,
       "name": "Junk journal bundle - 25 pulls",
@@ -66,13 +63,12 @@
       "status": "available",
       "id": "junk-journal-bundle-25",
       "image": "assets/logo-moth.png",
-      "category": "Live bundles",
-      "payLink": "https://buy.stripe.com/6oU7sM7ZOeN5fc7dd44Ja03"
+      "category": "Live bundles"
     },
     {
       "details": "Our biggest bundle yet — 20 hand-picked envelopes stuffed with vintage papers, ephemera, tags, trims, and little surprises.\n\nPlease let me know if you are a reader, a snarky person, fav primary color\n",
       "summary": "The EPIC EPIC bundle — 20 envelopes packed with vintage papers and surprises. Price includes shipping.",
-      "price": "$79.99",
+      "price": "$84.99",
       "alt": "Epic Little Treasures logo",
       "available": true,
       "name": "EPIC EPIC BUNDLE",

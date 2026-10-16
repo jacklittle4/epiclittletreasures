@@ -112,6 +112,13 @@ const bundleTierLabel = (product = {}) => {
   const match = String(product.name || "").match(/(\d+)\s*pulls?/i);
   return match ? `${match[1]} pulls` : product.name || "";
 };
+// Small line under a named bundle's tile (e.g. "20 envelopes") when the label
+// itself isn't already a count.
+const bundleTierNote = (product = {}) => {
+  if (/(\d+)\s*pulls?/i.test(String(product.name || ""))) return "";
+  const match = `${product.name || ""} ${product.summary || ""}`.match(/(\d+)\s*(envelopes?|pulls?)/i);
+  return match ? `${match[1]} ${match[2].toLowerCase()}` : "";
+};
 const statusLabels = {
   available: "Available",
   "sold-out": "Sold out",
@@ -156,7 +163,9 @@ const productCard = (product, mode = "grid") => {
         <div class="product-meta-line">${availability}</div>
         <div class="buy-links">
           ${
-            canBuyNow
+            canBuyNow && isBundle(product)
+              ? `<button type="button" class="buy-now-link" data-add-to-cart="${escapeHtml(productKey(product))}">Add to cart</button>`
+              : canBuyNow
               ? `<a class="buy-now-link" href="${productCheckoutUrl(product)}">Buy now</a>`
               : `<a class="buy-now-link" href="${productInquiryUrl(product)}">${status === "sold-out" ? "Ask next batch" : "Start request"}</a>`
           }
@@ -206,9 +215,11 @@ const renderBundleTiers = (catalog) => {
       const canBuyNow = status === "available" && isFixedPrice(product.price || "");
       const label = escapeHtml(bundleTierLabel(product));
       const price = escapeHtml(product.price || "");
+      const tierNote = bundleTierNote(product);
+      const noteHtml = tierNote ? `<em class="bundle-tier-note">${escapeHtml(tierNote)}</em>` : "";
       if (canBuyNow) {
         const id = escapeHtml(productKey(product));
-        return `<div class="bundle-tier bundle-tier-buy"><span>${label}</span><strong>${price}</strong><button type="button" class="bundle-tier-add" data-add-to-cart="${id}" aria-label="Add ${label} bundle (${price}) to cart">Add to cart</button></div>`;
+        return `<div class="bundle-tier bundle-tier-buy"><span>${label}</span>${noteHtml}<strong>${price}</strong><button type="button" class="bundle-tier-add" data-add-to-cart="${id}" aria-label="Add ${label} bundle (${price}) to cart">Add to cart</button></div>`;
       }
       const cta = status === "sold-out" ? "Ask next batch" : "Ask about this";
       return `<a class="bundle-tier" href="${productInquiryUrl(product)}" aria-label="${label} bundle ${price} - ${cta}"><span>${label}</span><strong>${price}</strong><span class="bundle-tier-cta">${cta}</span></a>`;
@@ -245,21 +256,17 @@ const renderCheckout = (catalog) => {
   const itemId = params.get("item");
   const product = products.find((entry) => productKey(entry) === itemId);
 
+  // Bundles are bought through the cart (it prices from the catalog, collects the
+  // 4 questions once, and offers card/Klarna/Affirm). Old "Buy now" links land
+  // here, so add the bundle and hand off to the cart. replace() keeps this page
+  // out of history, so Back doesn't re-add it.
+  if (product && isBundle(product) && isFixedPrice(product.price || "") && normalizeStatus(product) === "available") {
+    addToCart(productKey(product));
+    window.location.replace("cart.html");
+    return;
+  }
   if (!product) {
-    checkoutTarget.innerHTML = `
-      <article class="checkout-card">
-        <p class="eyebrow">Choose a treasure</p>
-        <h2>Pick an item first, then come back here to pay.</h2>
-        <p>
-          Each product card has a Buy Now button for fixed-price pieces. Custom work
-          should start with a quick message so the final price is clear.
-        </p>
-        <div class="payment-actions">
-          <a class="button button-primary" href="treasures.html">Browse the shop</a>
-          <a class="button button-secondary" href="contact.html">Ask a question</a>
-        </div>
-      </article>
-    `;
+    window.location.replace("cart.html");
     return;
   }
 
@@ -560,8 +567,19 @@ const parseWorkshopDate = (iso) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
+// A class counts as past once its date has gone by, even if nobody flipped its
+// status in /manage — so stale classes never show as "upcoming".
+const isPastWorkshop = (workshop) => {
+  if ((workshop.status || "upcoming") === "past") return true;
+  const date = parseWorkshopDate(workshop.date);
+  if (!date) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date < today;
+};
+
 const workshopCard = (workshop) => {
-  const status = workshop.status || "upcoming";
+  const status = isPastWorkshop(workshop) ? "past" : workshop.status || "upcoming";
   const date = parseWorkshopDate(workshop.date);
   const badge = date
     ? `<div class="workshop-date"><span class="wd-month">${monthShort[date.getMonth()]}</span><span class="wd-day">${date.getDate()}</span></div>`
@@ -596,8 +614,8 @@ const renderWorkshops = (data) => {
     const mode = target.dataset.workshops;
     const limit = Number(target.dataset.limit || 0);
     const list = mode === "upcoming"
-      ? all.filter((workshop) => (workshop.status || "upcoming") !== "past")
-      : all;
+      ? all.filter((workshop) => !isPastWorkshop(workshop))
+      : [...all].sort((a, b) => Number(isPastWorkshop(a)) - Number(isPastWorkshop(b)));
     const rendered = (limit ? list.slice(0, limit) : list).map(workshopCard);
 
     target.innerHTML = rendered.length

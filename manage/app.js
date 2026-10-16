@@ -277,7 +277,7 @@ function productForm(p) {
         </select></label>
       <label class="field"><span>Short description</span>
         <textarea data-f="summary" placeholder="A sentence or two shown under the name.">${esc(p.summary || "")}</textarea></label>
-      <label class="field"><span>Buy link — card / Klarna / Affirm <span class="hint">(optional, from Stripe)</span></span>
+      <label class="field"><span>Buy link — card / Klarna / Affirm <span class="hint">(leave blank for bundles — they get card checkout automatically through the cart; only for other fixed-price items)</span></span>
         <input type="text" data-f="payLink" value="${attr(p.payLink || "")}" placeholder="https://buy.stripe.com/..." /></label>
       <div class="form-actions">
         <button class="btn btn-primary" data-action="save-product">Save product</button>
