@@ -42,13 +42,6 @@ export default {
       if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
       return orderNotify(request, env);
     }
-    // Internal links use page.html; serve those directly instead of letting the
-    // asset layer bounce them to /page (saves a round-trip on every tap).
-    if (request.method === "GET" && url.pathname.endsWith(".html")) {
-      const clean = new URL(url);
-      clean.pathname = url.pathname.replace(/(^|\/)index\.html$/, "$1").replace(/\.html$/, "");
-      return env.ASSETS.fetch(new Request(clean.toString(), request));
-    }
     // Everything else is the static site.
     return env.ASSETS.fetch(request);
   },
@@ -112,8 +105,8 @@ async function createCheckout(request, env) {
 
   const form = new URLSearchParams();
   form.set("mode", "payment");
-  form.set("success_url", `${ORIGIN}/thank-you.html?order=success&session_id={CHECKOUT_SESSION_ID}`);
-  form.set("cancel_url", `${ORIGIN}/cart.html`);
+  form.set("success_url", `${ORIGIN}/thank-you?order=success&session_id={CHECKOUT_SESSION_ID}`);
+  form.set("cancel_url", `${ORIGIN}/cart`);
   form.set("shipping_address_collection[allowed_countries][0]", "US");
   form.set("phone_number_collection[enabled]", "true");
   // Leaving payment_method_types unset lets Stripe show every method enabled in
